@@ -29,16 +29,64 @@ function checkUrl(targetUrl) {
 
         const req = client.request(options, (res) => {
             const responseTime = Date.now() - startTime;
-            const isUp = res.statusCode >= 200 && res.statusCode < 400;
+            let body = '';
 
-            // Consume response data
-            res.on('data', () => {});
+            // Collect response body for analysis
+            res.on('data', (chunk) => {
+                // Limit body collection to first 10KB to avoid memory issues
+                if (body.length < 10240) {
+                    body += chunk.toString();
+                }
+            });
+
             res.on('end', () => {
+                // First check: HTTP status code
+                let isUp = res.statusCode >= 200 && res.statusCode < 400;
+                let errorMessage = null;
+
+                // Second check: Detect Cloudflare and other proxy error pages
+                if (isUp && body) {
+                    const bodyLower = body.toLowerCase();
+
+                    // Cloudflare error patterns
+                    const cloudflareErrors = [
+                        'error 520', 'error 521', 'error 522', 'error 523', 'error 524', 'error 525', 'error 526', 'error 527',
+                        'origin is unreachable', 'connection timed out', 'web server is down',
+                        'cloudflare ray id:', 'attention required! | cloudflare'
+                    ];
+
+                    // Generic error patterns
+                    const genericErrors = [
+                        '503 service unavailable',
+                        '502 bad gateway',
+                        '504 gateway timeout',
+                        'temporarily unavailable',
+                        'service temporarily unavailable'
+                    ];
+
+                    // Check for error indicators in response body
+                    const hasCloudflareError = cloudflareErrors.some(pattern =>
+                        bodyLower.includes(pattern)
+                    );
+                    const hasGenericError = genericErrors.some(pattern =>
+                        bodyLower.includes(pattern)
+                    );
+
+                    if (hasCloudflareError || hasGenericError) {
+                        isUp = false;
+                        errorMessage = 'Proxy/CDN error page detected';
+                    }
+                }
+
+                if (!isUp && !errorMessage) {
+                    errorMessage = `HTTP ${res.statusCode}`;
+                }
+
                 resolve({
                     status: isUp ? 'up' : 'down',
                     statusCode: res.statusCode,
                     responseTime,
-                    error: isUp ? null : `HTTP ${res.statusCode}`,
+                    error: errorMessage,
                     timestamp: new Date().toISOString()
                 });
             });
