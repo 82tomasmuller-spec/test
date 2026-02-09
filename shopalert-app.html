@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopAlert - E-Shop Uptime Guard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f9fafb; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
+
+        /* Navigation */
+        nav { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1rem 0; }
+        .nav-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #2563eb; cursor: pointer; }
+        .nav-links { display: flex; gap: 1rem; }
+        .nav-links button { padding: 0.5rem 1rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #374151; transition: color 0.2s; }
+        .nav-links button:hover { color: #2563eb; }
+        .nav-links button.active { color: #2563eb; border-bottom: 2px solid #2563eb; }
+
+        /* Main Content */
+        main { padding: 2rem 0; min-height: 70vh; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h2 { font-size: 1.875rem; font-weight: bold; color: #111827; margin-bottom: 1.5rem; }
+
+        /* Cards Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        .stat-card { display: flex; align-items: center; }
+        .stat-icon { width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; }
+        .stat-icon.blue { background: #dbeafe; color: #2563eb; }
+        .stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+        .stat-icon.green { background: #d1fae5; color: #059669; }
+        .stat-label { font-size: 0.875rem; color: #6b7280; }
+        .stat-value { font-size: 1.875rem; font-weight: bold; color: #111827; }
+
+        /* Alert Box */
+        .alert { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.5rem; padding: 1.5rem; }
+        .alert h3 { font-size: 1.125rem; font-weight: 600; color: #1e3a8a; margin-bottom: 0.5rem; }
+        .alert p { color: #1e40af; }
+
+        /* List Items */
+        .list { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .list-item { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .list-item:last-child { border-bottom: none; }
+        .list-item:hover { background: #f9fafb; }
+        .list-item h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .list-item a { color: #2563eb; text-decoration: none; font-size: 0.875rem; }
+        .list-item a:hover { text-decoration: underline; }
+        .list-meta { margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280; display: flex; gap: 1rem; }
+        .empty-state { text-align: center; padding: 3rem; color: #6b7280; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500; }
+        .badge.green { background: #d1fae5; color: #065f46; }
+        .badge.red { background: #fee2e2; color: #991b1b; }
+        .badge.yellow { background: #fef3c7; color: #92400e; }
+
+        /* Buttons */
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-small { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+
+        /* Header with Button */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.5rem; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-header h3 { font-size: 1.25rem; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; }
+        .close-btn:hover { color: #111827; }
+
+        /* Form */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #2563eb; }
+        .form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem; }
+
+        /* Flex Layouts */
+        .flex { display: flex; }
+        .flex-1 { flex: 1; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+
+        /* Status Icons */
+        .status-icon { font-size: 1.5rem; margin-right: 0.75rem; }
+        .status-icon.green { color: #059669; }
+        .status-icon.red { color: #dc2626; }
+        .status-icon.yellow { color: #d97706; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo" onclick="showSection('dashboard')">ShopAlert</div>
+                <div class="nav-links">
+                    <button onclick="showSection('dashboard')" id="nav-dashboard">Dashboard</button>
+                    <button onclick="showSection('shops')" id="nav-shops">E-shopy</button>
+                    <button onclick="showSection('monitors')" id="nav-monitors">Monitory</button>
+                    <button onclick="showSection('incidents')" id="nav-incidents">Incidenty</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Dashboard -->
+        <div id="dashboard" class="section active">
+            <h2>Dashboard</h2>
+            <div class="grid">
+                <div class="card stat-card">
+                    <div class="stat-icon blue">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">E-shopy</div>
+                        <div class="stat-value" id="stat-shops">0</div>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon purple">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">Monitory</div>
+                        <div class="stat-value" id="stat-monitors">0</div>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon green">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">Uptime</div>
+                        <div class="stat-value" id="stat-uptime">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert">
+                <h3>✅ ShopAlert je připraven!</h3>
+                <p>Přidejte svůj první e-shop a začněte monitorovat jeho dostupnost 24/7. Budete okamžitě upozorněni na jakékoli výpadky.</p>
+            </div>
+        </div>
+
+        <!-- E-shopy -->
+        <div id="shops" class="section">
+            <div class="header-row">
+                <h2>E-shopy</h2>
+                <button class="btn btn-primary" onclick="openAddShopModal()">+ Přidat e-shop</button>
+            </div>
+            <div class="list" id="shops-list">
+                <div class="empty-state">Zatím nemáte žádný e-shop. Přidejte svůj první e-shop kliknutím na tlačítko výše.</div>
+            </div>
+        </div>
+
+        <!-- Monitory -->
+        <div id="monitors" class="section">
+            <div class="header-row">
+                <h2>Monitory</h2>
+                <button class="btn btn-primary" onclick="openAddMonitorModal()">+ Přidat monitor</button>
+            </div>
+            <div class="list" id="monitors-list">
+                <div class="empty-state">Zatím nemáte žádný monitor. Nejprve přidejte e-shop, pak můžete vytvořit monitory.</div>
+            </div>
+        </div>
+
+        <!-- Incidenty -->
+        <div id="incidents" class="section">
+            <div class="header-row">
+                <h2>Incidenty</h2>
+                <button class="btn btn-secondary" onclick="exportIncidents()">Export CSV</button>
+            </div>
+            <div class="list" id="incidents-list">
+                <div class="empty-state">Zatím nejsou žádné incidenty. Skvělá práce!</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal pro přidání e-shopu -->
+    <div id="add-shop-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Přidat e-shop</h3>
+                <button class="close-btn" onclick="closeModal('add-shop-modal')">&times;</button>
+            </div>
+            <form onsubmit="addShop(event)">
+                <div class="form-group">
+                    <label for="shop-name">Název e-shopu *</label>
+                    <input type="text" id="shop-name" required placeholder="např. Můj E-shop.cz">
+                </div>
+                <div class="form-group">
+                    <label for="shop-url">URL adresa *</label>
+                    <input type="url" id="shop-url" required placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="shop-description">Popis (volitelné)</label>
+                    <textarea id="shop-description" rows="3" placeholder="Stručný popis vašeho e-shopu"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-shop-modal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Přidat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pro přidání monitoru -->
+    <div id="add-monitor-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Přidat monitor</h3>
+                <button class="close-btn" onclick="closeModal('add-monitor-modal')">&times;</button>
+            </div>
+            <form onsubmit="addMonitor(event)">
+                <div class="form-group">
+                    <label for="monitor-shop">E-shop *</label>
+                    <select id="monitor-shop" required>
+                        <option value="">Vyberte e-shop</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="monitor-url">URL k monitorování *</label>
+                    <input type="url" id="monitor-url" required placeholder="https://example.com/checkout">
+                </div>
+                <div class="form-group">
+                    <label for="monitor-interval">Interval kontroly</label>
+                    <select id="monitor-interval">
+                        <option value="60000">1 minuta</option>
+                        <option value="300000" selected>5 minut</option>
+                        <option value="600000">10 minut</option>
+                        <option value="1800000">30 minut</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-monitor-modal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Přidat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let shops = JSON.parse(localStorage.getItem('shopalert_shops') || '[]');
+        let monitors = JSON.parse(localStorage.getItem('shopalert_monitors') || '[]');
+        let incidents = JSON.parse(localStorage.getItem('shopalert_incidents') || '[]');
+
+        // Initialize app
+        function init() {
+            renderStats();
+            renderShops();
+            renderMonitors();
+            renderIncidents();
+            loadShopSelect();
+        }
+
+        // Show section
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            document.getElementById('nav-' + sectionId).classList.add('active');
+        }
+
+        // Modal functions
+        function openAddShopModal() {
+            document.getElementById('add-shop-modal').classList.add('active');
+        }
+
+        function openAddMonitorModal() {
+            if (shops.length === 0) {
+                alert('Nejprve přidejte e-shop!');
+                return;
+            }
+            loadShopSelect();
+            document.getElementById('add-monitor-modal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Add shop
+        function addShop(event) {
+            event.preventDefault();
+            const shop = {
+                id: Date.now(),
+                name: document.getElementById('shop-name').value,
+                url: document.getElementById('shop-url').value,
+                description: document.getElementById('shop-description').value,
+                createdAt: new Date().toISOString()
+            };
+            shops.push(shop);
+            localStorage.setItem('shopalert_shops', JSON.stringify(shops));
+            closeModal('add-shop-modal');
+            event.target.reset();
+            renderStats();
+            renderShops();
+            loadShopSelect();
+        }
+
+        // Delete shop
+        function deleteShop(id) {
+            if (!confirm('Opravdu chcete smazat tento e-shop? Budou smazány i všechny jeho monitory.')) return;
+            shops = shops.filter(s => s.id !== id);
+            monitors = monitors.filter(m => m.shopId !== id);
+            localStorage.setItem('shopalert_shops', JSON.stringify(shops));
+            localStorage.setItem('shopalert_monitors', JSON.stringify(monitors));
+            renderStats();
+            renderShops();
+            renderMonitors();
+        }
+
+        // Add monitor
+        function addMonitor(event) {
+            event.preventDefault();
+            const monitor = {
+                id: Date.now(),
+                shopId: parseInt(document.getElementById('monitor-shop').value),
+                url: document.getElementById('monitor-url').value,
+                interval: parseInt(document.getElementById('monitor-interval').value),
+                status: 'unknown',
+                lastCheck: null,
+                createdAt: new Date().toISOString()
+            };
+            monitors.push(monitor);
+            localStorage.setItem('shopalert_monitors', JSON.stringify(monitors));
+            closeModal('add-monitor-modal');
+            event.target.reset();
+            renderStats();
+            renderMonitors();
+        }
+
+        // Delete monitor
+        function deleteMonitor(id) {
+            if (!confirm('Opravdu chcete smazat tento monitor?')) return;
+            monitors = monitors.filter(m => m.id !== id);
+            localStorage.setItem('shopalert_monitors', JSON.stringify(monitors));
+            renderStats();
+            renderMonitors();
+        }
+
+        // Simulate status check
+        function simulateCheck(monitorId) {
+            const monitor = monitors.find(m => m.id === monitorId);
+            if (!monitor) return;
+
+            const statuses = ['up', 'up', 'up', 'down']; // 75% chance of up
+            monitor.status = statuses[Math.floor(Math.random() * statuses.length)];
+            monitor.lastCheck = new Date().toISOString();
+            monitor.responseTime = Math.floor(Math.random() * 500) + 50;
+
+            if (monitor.status === 'down' && Math.random() > 0.5) {
+                const incident = {
+                    id: Date.now(),
+                    monitorId: monitor.id,
+                    status: 'ongoing',
+                    startedAt: new Date().toISOString(),
+                    errorMessage: 'HTTP 503 Service Unavailable'
+                };
+                incidents.push(incident);
+                localStorage.setItem('shopalert_incidents', JSON.stringify(incidents));
+            }
+
+            localStorage.setItem('shopalert_monitors', JSON.stringify(monitors));
+            renderStats();
+            renderMonitors();
+            renderIncidents();
+        }
+
+        // Render functions
+        function renderStats() {
+            document.getElementById('stat-shops').textContent = shops.length;
+            document.getElementById('stat-monitors').textContent = monitors.length;
+            const upMonitors = monitors.filter(m => m.status === 'up').length;
+            const uptime = monitors.length > 0 ? ((upMonitors / monitors.length) * 100).toFixed(1) : 100;
+            document.getElementById('stat-uptime').textContent = uptime + '%';
+        }
+
+        function renderShops() {
+            const container = document.getElementById('shops-list');
+            if (shops.length === 0) {
+                container.innerHTML = '<div class="empty-state">Zatím nemáte žádný e-shop. Přidejte svůj první e-shop kliknutím na tlačítko výše.</div>';
+                return;
+            }
+            container.innerHTML = shops.map(shop => {
+                const shopMonitors = monitors.filter(m => m.shopId === shop.id);
+                return `
+                    <div class="list-item">
+                        <div class="flex-1">
+                            <h3>${shop.name}</h3>
+                            <a href="${shop.url}" target="_blank">${shop.url}</a>
+                            ${shop.description ? `<p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">${shop.description}</p>` : ''}
+                            <div class="list-meta">
+                                <span>Monitorů: ${shopMonitors.length}</span>
+                                <span style="color: #059669;">● Online</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-danger btn-small" onclick="deleteShop(${shop.id})">Smazat</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderMonitors() {
+            const container = document.getElementById('monitors-list');
+            if (monitors.length === 0) {
+                container.innerHTML = '<div class="empty-state">Zatím nemáte žádný monitor. Nejprve přidejte e-shop, pak můžete vytvořit monitory.</div>';
+                return;
+            }
+            container.innerHTML = monitors.map(monitor => {
+                const shop = shops.find(s => s.id === monitor.shopId);
+                const statusIcon = monitor.status === 'up' ? '✓' : monitor.status === 'down' ? '✗' : '?';
+                const statusColor = monitor.status === 'up' ? 'green' : monitor.status === 'down' ? 'red' : 'yellow';
+                const badgeClass = monitor.status === 'up' ? 'green' : monitor.status === 'down' ? 'red' : 'yellow';
+                const lastCheck = monitor.lastCheck ? new Date(monitor.lastCheck).toLocaleString('cs-CZ') : 'Nikdy';
+
+                return `
+                    <div class="list-item">
+                        <div class="flex items-center gap-3 flex-1">
+                            <span class="status-icon ${statusColor}">${statusIcon}</span>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3>${monitor.url}</h3>
+                                    <span class="badge ${badgeClass}">${monitor.status.toUpperCase()}</span>
+                                </div>
+                                <div class="list-meta">
+                                    <span>Shop: ${shop ? shop.name : 'Neznámý'}</span>
+                                    ${monitor.responseTime ? `<span>Odezva: ${monitor.responseTime}ms</span>` : ''}
+                                    <span>Poslední kontrola: ${lastCheck}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary btn-small" onclick="simulateCheck(${monitor.id})">Zkontrolovat</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteMonitor(${monitor.id})">Smazat</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderIncidents() {
+            const container = document.getElementById('incidents-list');
+            if (incidents.length === 0) {
+                container.innerHTML = '<div class="empty-state">Zatím nejsou žádné incidenty. Skvělá práce!</div>';
+                return;
+            }
+            container.innerHTML = incidents.slice(-10).reverse().map(incident => {
+                const monitor = monitors.find(m => m.id === incident.monitorId);
+                const shop = monitor ? shops.find(s => s.id === monitor.shopId) : null;
+                const duration = incident.resolvedAt
+                    ? Math.round((new Date(incident.resolvedAt) - new Date(incident.startedAt)) / 1000 / 60) + 'm'
+                    : 'Probíhá';
+
+                return `
+                    <div class="list-item">
+                        <div class="flex gap-3 flex-1">
+                            <span style="font-size: 1.25rem; color: ${incident.status === 'ongoing' ? '#dc2626' : '#059669'};">${incident.status === 'ongoing' ? '⚠' : '✓'}</span>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3>${monitor ? monitor.url : 'Neznámý monitor'}</h3>
+                                    <span class="badge ${incident.status === 'ongoing' ? 'red' : 'green'}">${incident.status === 'ongoing' ? 'PROBÍHÁ' : 'VYŘEŠENO'}</span>
+                                </div>
+                                ${shop ? `<p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0;">Shop: ${shop.name}</p>` : ''}
+                                <p style="font-size: 0.875rem; color: #dc2626; margin: 0.5rem 0;">${incident.errorMessage}</p>
+                                <div class="list-meta">
+                                    <span><strong>Začátek:</strong> ${new Date(incident.startedAt).toLocaleString('cs-CZ')}</span>
+                                    <span><strong>Trvání:</strong> ${duration}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadShopSelect() {
+            const select = document.getElementById('monitor-shop');
+            select.innerHTML = '<option value="">Vyberte e-shop</option>' +
+                shops.map(shop => `<option value="${shop.id}">${shop.name}</option>`).join('');
+        }
+
+        function exportIncidents() {
+            if (incidents.length === 0) {
+                alert('Nejsou žádné incidenty k exportu');
+                return;
+            }
+            const csv = 'ID,Monitor,Shop,Status,Chyba,Začátek,Konec\n' +
+                incidents.map(i => {
+                    const monitor = monitors.find(m => m.id === i.monitorId);
+                    const shop = monitor ? shops.find(s => s.id === monitor.shopId) : null;
+                    return `${i.id},"${monitor?.url || 'N/A'}","${shop?.name || 'N/A'}",${i.status},"${i.errorMessage}",${i.startedAt},${i.resolvedAt || ''}`;
+                }).join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'incidents.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>
