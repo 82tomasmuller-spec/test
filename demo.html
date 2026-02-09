@@ -4,149 +4,230 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShopAlert - E-Shop Uptime Guard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f9fafb; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
+
+        /* Navigation */
+        nav { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1rem 0; }
+        .nav-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #2563eb; }
+        .nav-links { display: flex; gap: 1rem; }
+        .nav-links button { padding: 0.5rem 1rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #374151; }
+        .nav-links button:hover { color: #2563eb; }
+
+        /* Main Content */
+        main { padding: 2rem 0; }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        h2 { font-size: 1.875rem; font-weight: bold; color: #111827; margin-bottom: 1.5rem; }
+
+        /* Cards Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        .stat-card { display: flex; align-items: center; }
+        .stat-icon { width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; }
+        .stat-icon.blue { background: #dbeafe; color: #2563eb; }
+        .stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+        .stat-icon.green { background: #d1fae5; color: #059669; }
+        .stat-label { font-size: 0.875rem; color: #6b7280; }
+        .stat-value { font-size: 1.875rem; font-weight: bold; color: #111827; }
+
+        /* Alert Box */
+        .alert { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.5rem; padding: 1.5rem; }
+        .alert h3 { font-size: 1.125rem; font-weight: 600; color: #1e3a8a; margin-bottom: 0.5rem; }
+        .alert p { color: #1e40af; }
+
+        /* List Items */
+        .list { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .list-item { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; }
+        .list-item:last-child { border-bottom: none; }
+        .list-item:hover { background: #f9fafb; }
+        .list-item h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .list-item a { color: #2563eb; text-decoration: none; font-size: 0.875rem; }
+        .list-item a:hover { text-decoration: underline; }
+        .list-meta { margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280; display: flex; gap: 1rem; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500; }
+        .badge.green { background: #d1fae5; color: #065f46; }
+        .badge.red { background: #fee2e2; color: #991b1b; }
+
+        /* Status Icons */
+        .status-icon { font-size: 1.5rem; margin-right: 0.75rem; }
+        .status-icon.green { color: #059669; }
+        .status-icon.red { color: #dc2626; }
+
+        /* Buttons */
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+
+        /* Header with Button */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+        /* Flex Layouts */
+        .flex { display: flex; }
+        .flex-1 { flex: 1; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+
+        /* Empty State */
+        .empty { text-align: center; padding: 3rem; color: #6b7280; }
+    </style>
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-blue-600">ShopAlert</h1>
-                <div class="flex gap-4">
-                    <button onclick="showSection('dashboard')" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Dashboard</button>
-                    <button onclick="showSection('shops')" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">E-shopy</button>
-                    <button onclick="showSection('monitors')" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Monitory</button>
-                    <button onclick="showSection('incidents')" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Incidenty</button>
+<body>
+    <nav>
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">ShopAlert</div>
+                <div class="nav-links">
+                    <button onclick="showSection('dashboard')">Dashboard</button>
+                    <button onclick="showSection('shops')">E-shopy</button>
+                    <button onclick="showSection('monitors')">Monitory</button>
+                    <button onclick="showSection('incidents')">Incidenty</button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 py-8">
+    <main class="container">
         <!-- Dashboard -->
-        <div id="dashboard" class="section">
-            <h2 class="text-3xl font-bold text-gray-900 mb-6">Dashboard</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center">
-                        <div class="p-3 bg-blue-100 rounded-full">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">E-shopy</p>
-                            <p class="text-2xl font-bold">3</p>
-                        </div>
+        <div id="dashboard" class="section active">
+            <h2>Dashboard</h2>
+            <div class="grid">
+                <div class="card stat-card">
+                    <div class="stat-icon blue">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">E-shopy</div>
+                        <div class="stat-value">3</div>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center">
-                        <div class="p-3 bg-purple-100 rounded-full">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">Monitory</p>
-                            <p class="text-2xl font-bold">8</p>
-                        </div>
+                <div class="card stat-card">
+                    <div class="stat-icon purple">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">Monitory</div>
+                        <div class="stat-value">8</div>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex items-center">
-                        <div class="p-3 bg-green-100 rounded-full">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm text-gray-600">Uptime</p>
-                            <p class="text-2xl font-bold">99.8%</p>
-                        </div>
+                <div class="card stat-card">
+                    <div class="stat-icon green">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">Uptime</div>
+                        <div class="stat-value">99.8%</div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-blue-900 mb-2">✅ ShopAlert je připraven!</h3>
-                <p class="text-blue-700">Toto je demo verze aplikace ShopAlert. Kompletní funkcionalita s backendem vyžaduje spuštění Node.js serveru.</p>
+            <div class="alert">
+                <h3>✅ ShopAlert je připraven!</h3>
+                <p>Toto je demo verze aplikace ShopAlert. Kompletní funkcionalita s backendem vyžaduje spuštění Node.js serveru.</p>
             </div>
         </div>
 
         <!-- E-shopy -->
-        <div id="shops" class="section hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold text-gray-900">E-shopy</h2>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">+ Přidat e-shop</button>
+        <div id="shops" class="section">
+            <div class="header-row">
+                <h2>E-shopy</h2>
+                <button class="btn btn-primary">+ Přidat e-shop</button>
             </div>
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="p-6 border-b hover:bg-gray-50">
-                    <h3 class="text-lg font-semibold">Můj E-shop.cz</h3>
-                    <p class="text-sm text-blue-600">https://mujeshop.cz</p>
-                    <div class="mt-2 flex gap-4 text-sm text-gray-600">
+            <div class="list">
+                <div class="list-item">
+                    <h3>Můj E-shop.cz</h3>
+                    <a href="https://mujeshop.cz" target="_blank">https://mujeshop.cz</a>
+                    <div class="list-meta">
                         <span>Monitorů: 3</span>
-                        <span class="text-green-600">● Online</span>
+                        <span style="color: #059669;">● Online</span>
                     </div>
                 </div>
-                <div class="p-6 border-b hover:bg-gray-50">
-                    <h3 class="text-lg font-semibold">Obchod24.sk</h3>
-                    <p class="text-sm text-blue-600">https://obchod24.sk</p>
-                    <div class="mt-2 flex gap-4 text-sm text-gray-600">
+                <div class="list-item">
+                    <h3>Obchod24.sk</h3>
+                    <a href="https://obchod24.sk" target="_blank">https://obchod24.sk</a>
+                    <div class="list-meta">
                         <span>Monitorů: 2</span>
-                        <span class="text-green-600">● Online</span>
+                        <span style="color: #059669;">● Online</span>
                     </div>
                 </div>
-                <div class="p-6 hover:bg-gray-50">
-                    <h3 class="text-lg font-semibold">TechStore Pro</h3>
-                    <p class="text-sm text-blue-600">https://techstorepro.cz</p>
-                    <div class="mt-2 flex gap-4 text-sm text-gray-600">
+                <div class="list-item">
+                    <h3>TechStore Pro</h3>
+                    <a href="https://techstorepro.cz" target="_blank">https://techstorepro.cz</a>
+                    <div class="list-meta">
                         <span>Monitorů: 3</span>
-                        <span class="text-green-600">● Online</span>
+                        <span style="color: #059669;">● Online</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Monitory -->
-        <div id="monitors" class="section hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold text-gray-900">Monitory</h2>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">+ Přidat monitor</button>
+        <div id="monitors" class="section">
+            <div class="header-row">
+                <h2>Monitory</h2>
+                <button class="btn btn-primary">+ Přidat monitor</button>
             </div>
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="p-6 border-b hover:bg-gray-50">
+            <div class="list">
+                <div class="list-item">
                     <div class="flex items-center gap-3">
-                        <span class="text-green-600 text-2xl">✓</span>
+                        <span class="status-icon green">✓</span>
                         <div class="flex-1">
                             <div class="flex items-center gap-2">
-                                <h3 class="font-semibold">https://mujeshop.cz</h3>
-                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">UP</span>
+                                <h3>https://mujeshop.cz</h3>
+                                <span class="badge green">UP</span>
                             </div>
-                            <p class="text-sm text-gray-600">Odezva: 142ms | Poslední kontrola: Před 2 minutami</p>
+                            <div class="list-meta">
+                                <span>Odezva: 142ms</span>
+                                <span>Poslední kontrola: Před 2 minutami</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="p-6 border-b hover:bg-gray-50">
+                <div class="list-item">
                     <div class="flex items-center gap-3">
-                        <span class="text-green-600 text-2xl">✓</span>
+                        <span class="status-icon green">✓</span>
                         <div class="flex-1">
                             <div class="flex items-center gap-2">
-                                <h3 class="font-semibold">https://mujeshop.cz/kosik</h3>
-                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">UP</span>
+                                <h3>https://mujeshop.cz/kosik</h3>
+                                <span class="badge green">UP</span>
                             </div>
-                            <p class="text-sm text-gray-600">Odezva: 89ms | Poslední kontrola: Před 1 minutou</p>
+                            <div class="list-meta">
+                                <span>Odezva: 89ms</span>
+                                <span>Poslední kontrola: Před 1 minutou</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="p-6 hover:bg-gray-50">
+                <div class="list-item">
                     <div class="flex items-center gap-3">
-                        <span class="text-red-600 text-2xl">✗</span>
+                        <span class="status-icon red">✗</span>
                         <div class="flex-1">
                             <div class="flex items-center gap-2">
-                                <h3 class="font-semibold">https://obchod24.sk/platba</h3>
-                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">DOWN</span>
+                                <h3>https://obchod24.sk/platba</h3>
+                                <span class="badge red">DOWN</span>
                             </div>
-                            <p class="text-sm text-red-600">HTTP 503 | Poslední kontrola: Před 30 sekundami</p>
+                            <div class="list-meta" style="color: #dc2626;">
+                                <span>HTTP 503</span>
+                                <span>Poslední kontrola: Před 30 sekundami</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -154,41 +235,41 @@
         </div>
 
         <!-- Incidenty -->
-        <div id="incidents" class="section hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold text-gray-900">Incidenty</h2>
-                <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">Export CSV</button>
+        <div id="incidents" class="section">
+            <div class="header-row">
+                <h2>Incidenty</h2>
+                <button class="btn btn-secondary">Export CSV</button>
             </div>
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="p-6 border-b hover:bg-gray-50">
-                    <div class="flex items-start gap-3">
-                        <span class="text-red-600 text-xl">⚠</span>
+            <div class="list">
+                <div class="list-item">
+                    <div class="flex gap-3">
+                        <span style="font-size: 1.25rem; color: #dc2626;">⚠</span>
                         <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                                <h3 class="font-semibold">https://obchod24.sk/platba</h3>
-                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">PROBÍHÁ</span>
+                            <div class="flex items-center gap-2">
+                                <h3>https://obchod24.sk/platba</h3>
+                                <span class="badge red">PROBÍHÁ</span>
                             </div>
-                            <p class="text-sm text-red-600 mb-2">Chyba: HTTP 503</p>
-                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                                <div><span class="font-medium">Začátek:</span> 09.02.2026 07:05:30</div>
-                                <div><span class="font-medium">Trvání:</span> 5m</div>
+                            <p style="font-size: 0.875rem; color: #dc2626; margin: 0.5rem 0;">Chyba: HTTP 503</p>
+                            <div class="list-meta">
+                                <span><strong>Začátek:</strong> 09.02.2026 07:05:30</span>
+                                <span><strong>Trvání:</strong> 5m</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="p-6 hover:bg-gray-50">
-                    <div class="flex items-start gap-3">
-                        <span class="text-green-600 text-xl">✓</span>
+                <div class="list-item">
+                    <div class="flex gap-3">
+                        <span style="font-size: 1.25rem; color: #059669;">✓</span>
                         <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                                <h3 class="font-semibold">https://mujeshop.cz</h3>
-                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">VYŘEŠENO</span>
+                            <div class="flex items-center gap-2">
+                                <h3>https://mujeshop.cz</h3>
+                                <span class="badge green">VYŘEŠENO</span>
                             </div>
-                            <p class="text-sm text-gray-600 mb-2">Chyba: Timeout</p>
-                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                                <div><span class="font-medium">Začátek:</span> 08.02.2026 14:23:10</div>
-                                <div><span class="font-medium">Konec:</span> 08.02.2026 14:28:45</div>
-                                <div><span class="font-medium">Trvání:</span> 5m 35s</div>
+                            <p style="font-size: 0.875rem; color: #6b7280; margin: 0.5rem 0;">Chyba: Timeout</p>
+                            <div class="list-meta">
+                                <span><strong>Začátek:</strong> 08.02.2026 14:23:10</span>
+                                <span><strong>Konec:</strong> 08.02.2026 14:28:45</span>
+                                <span><strong>Trvání:</strong> 5m 35s</span>
                             </div>
                         </div>
                     </div>
@@ -200,9 +281,9 @@
     <script>
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => {
-                section.classList.add('hidden');
+                section.classList.remove('active');
             });
-            document.getElementById(sectionId).classList.remove('hidden');
+            document.getElementById(sectionId).classList.add('active');
         }
     </script>
 </body>
