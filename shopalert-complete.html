@@ -143,6 +143,29 @@
         .info-label { font-weight: 500; color: #6b7280; }
         .info-value { color: #111827; }
     </style>
+
+    <!-- EmailJS Library for sending email notifications -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        // EmailJS Configuration - REPLACE WITH YOUR OWN CREDENTIALS
+        // Sign up at: https://www.emailjs.com/
+        // 1. Create a new email service (Gmail, Outlook, etc.)
+        // 2. Create an email template with variables: {{monitor_url}}, {{shop_name}}, {{error_message}}, {{timestamp}}
+        // 3. Copy your Public Key, Service ID, and Template ID below
+
+        const EMAILJS_CONFIG = {
+            publicKey: 'YOUR_PUBLIC_KEY',        // Replace with your EmailJS public key
+            serviceId: 'YOUR_SERVICE_ID',         // Replace with your service ID
+            templateId: 'YOUR_TEMPLATE_ID'        // Replace with your template ID
+        };
+
+        // Initialize EmailJS with public key
+        (function(){
+            if (EMAILJS_CONFIG.publicKey !== 'YOUR_PUBLIC_KEY') {
+                emailjs.init(EMAILJS_CONFIG.publicKey);
+            }
+        })();
+    </script>
 </head>
 <body>
     <!-- Auth Page -->
@@ -446,15 +469,29 @@
                 </div>
                 <div class="form-group">
                     <label for="monitor-interval">Interval kontroly: <strong id="monitor-interval-label">5 minut</strong></label>
-                    <input type="range" id="monitor-interval" min="0" max="5" value="2" step="1" oninput="updateIntervalLabel('monitor-interval-label', this.value)" style="width: 100%; cursor: pointer;">
+                    <input type="range" id="monitor-interval" min="0" max="9" value="2" step="1" oninput="updateIntervalLabel('monitor-interval-label', this.value)" style="width: 100%; cursor: pointer;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
-                        <span>30s</span>
                         <span>1m</span>
                         <span>5m</span>
-                        <span>10m</span>
+                        <span>15m</span>
                         <span>30m</span>
                         <span>1h</span>
+                        <span>2h</span>
+                        <span>6h</span>
+                        <span>12h</span>
+                        <span>24h</span>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="monitor-email">📧 Email pro notifikace (volitelné)</label>
+                    <input type="email" id="monitor-email" placeholder="vas@email.cz">
+                    <small style="color: #6b7280; font-size: 0.75rem; margin-top: 0.25rem; display: block;">Email bude zaslán při každém výpadku</small>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="monitor-notify" style="width: auto; margin-right: 0.5rem;">
+                        <span>🔔 Posílat notifikace při výpadku</span>
+                    </label>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('add-monitor-modal')">Zrušit</button>
@@ -485,15 +522,29 @@
                 </div>
                 <div class="form-group">
                     <label for="edit-monitor-interval">Interval kontroly: <strong id="edit-monitor-interval-label">5 minut</strong></label>
-                    <input type="range" id="edit-monitor-interval" min="0" max="5" value="2" step="1" oninput="updateIntervalLabel('edit-monitor-interval-label', this.value)" style="width: 100%; cursor: pointer;">
+                    <input type="range" id="edit-monitor-interval" min="0" max="9" value="2" step="1" oninput="updateIntervalLabel('edit-monitor-interval-label', this.value)" style="width: 100%; cursor: pointer;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
-                        <span>30s</span>
                         <span>1m</span>
                         <span>5m</span>
-                        <span>10m</span>
+                        <span>15m</span>
                         <span>30m</span>
                         <span>1h</span>
+                        <span>2h</span>
+                        <span>6h</span>
+                        <span>12h</span>
+                        <span>24h</span>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-monitor-email">📧 Email pro notifikace (volitelné)</label>
+                    <input type="email" id="edit-monitor-email" placeholder="vas@email.cz">
+                    <small style="color: #6b7280; font-size: 0.75rem; margin-top: 0.25rem; display: block;">Email bude zaslán při každém výpadku</small>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="edit-monitor-notify" style="width: auto; margin-right: 0.5rem;">
+                        <span>🔔 Posílat notifikace při výpadku</span>
+                    </label>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('edit-monitor-modal')">Zrušit</button>
@@ -758,6 +809,9 @@
             document.getElementById('edit-monitor-interval').value = sliderValue;
             updateIntervalLabel('edit-monitor-interval-label', sliderValue);
 
+            document.getElementById('edit-monitor-email').value = monitor.email || '';
+            document.getElementById('edit-monitor-notify').checked = monitor.notifyOnFailure || false;
+
             document.getElementById('edit-monitor-modal').classList.add('active');
         }
 
@@ -807,18 +861,19 @@
         }
 
         function updateIntervalLabel(labelId, sliderValue) {
-            const labels = ['30 sekund', '1 minuta', '5 minut', '10 minut', '30 minut', '1 hodina'];
+            const labels = ['1 minuta', '5 minut', '15 minut', '30 minut', '1 hodina', '2 hodiny', '6 hodin', '12 hodin', '24 hodin'];
             document.getElementById(labelId).textContent = labels[parseInt(sliderValue)];
         }
 
         function getIntervalFromSlider(sliderValue) {
-            const intervals = [30000, 60000, 300000, 600000, 1800000, 3600000];
+            const intervals = [60000, 300000, 900000, 1800000, 3600000, 7200000, 21600000, 43200000, 86400000];
             return intervals[parseInt(sliderValue)];
         }
 
         function getSliderFromInterval(intervalMs) {
-            const intervals = [30000, 60000, 300000, 600000, 1800000, 3600000];
-            return intervals.indexOf(intervalMs);
+            const intervals = [60000, 300000, 900000, 1800000, 3600000, 7200000, 21600000, 43200000, 86400000];
+            const index = intervals.indexOf(intervalMs);
+            return index >= 0 ? index : 1; // Default to 5 min if not found
         }
 
         // Shop functions
@@ -914,8 +969,11 @@
                 shopId: shopId,
                 url: url,
                 interval: getIntervalFromSlider(document.getElementById('monitor-interval').value),
+                email: document.getElementById('monitor-email').value || null,
+                notifyOnFailure: document.getElementById('monitor-notify').checked,
                 status: 'unknown',
                 lastCheck: null,
+                lastEmailSent: null,
                 createdAt: new Date().toISOString()
             };
             monitors.push(monitor);
@@ -936,6 +994,8 @@
             monitor.shopId = parseInt(document.getElementById('edit-monitor-shop').value);
             monitor.url = document.getElementById('edit-monitor-url').value;
             monitor.interval = getIntervalFromSlider(document.getElementById('edit-monitor-interval').value);
+            monitor.email = document.getElementById('edit-monitor-email').value || null;
+            monitor.notifyOnFailure = document.getElementById('edit-monitor-notify').checked;
 
             saveUserData();
             closeModal('edit-monitor-modal');
@@ -981,6 +1041,56 @@
             }, 1000);
         }
 
+        // Email notification function
+        async function sendEmailAlert(monitor, shop) {
+            // Check if EmailJS is configured
+            if (EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY') {
+                console.log('⚠️  EmailJS není nakonfigurován. Email nebyl odeslán.');
+                console.log('Návod: Zaregistrujte se na https://www.emailjs.com/ a vyplňte EMAILJS_CONFIG v HTML souboru');
+                return false;
+            }
+
+            // Check if email is provided and notifications are enabled
+            if (!monitor.email || !monitor.notifyOnFailure) {
+                return false;
+            }
+
+            // Rate limiting: Don't send email more than once per 5 minutes per monitor
+            const now = Date.now();
+            const fiveMinutes = 5 * 60 * 1000;
+            if (monitor.lastEmailSent && (now - monitor.lastEmailSent) < fiveMinutes) {
+                console.log(`⏳ Email pro monitor ${monitor.id} byl odeslán nedávno. Čekám 5 minut...`);
+                return false;
+            }
+
+            // Prepare email template parameters
+            const templateParams = {
+                to_email: monitor.email,
+                monitor_url: monitor.url,
+                shop_name: shop ? shop.name : 'Neznámý e-shop',
+                error_message: 'HTTP 503 Service Unavailable - Server neodpovídá',
+                timestamp: new Date().toLocaleString('cs-CZ'),
+                response_time: monitor.responseTime + 'ms'
+            };
+
+            try {
+                // Send email using EmailJS
+                const response = await emailjs.send(
+                    EMAILJS_CONFIG.serviceId,
+                    EMAILJS_CONFIG.templateId,
+                    templateParams
+                );
+
+                // Update last email sent timestamp
+                monitor.lastEmailSent = now;
+                console.log(`✓ Email úspěšně odeslán na ${monitor.email} pro monitor ${monitor.url}`);
+                return true;
+            } catch (error) {
+                console.error('✗ Chyba při odesílání emailu:', error);
+                return false;
+            }
+        }
+
         function simulateCheck(monitorId, skipRender = false) {
             const monitor = monitors.find(m => m.id === monitorId);
             if (!monitor) return;
@@ -1024,6 +1134,12 @@
                     };
                     incidents.push(incident);
                 }
+            }
+
+            // Send email notification if monitor is DOWN and notifications are enabled
+            if (monitor.status === 'down' && monitor.notifyOnFailure && monitor.email) {
+                const shop = shops.find(s => s.id === monitor.shopId);
+                sendEmailAlert(monitor, shop);
             }
 
             // Auto-resolve incidents when monitor recovers
