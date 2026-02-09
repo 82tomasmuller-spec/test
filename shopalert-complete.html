@@ -71,6 +71,17 @@
         .list-meta { margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280; display: flex; gap: 1rem; flex-wrap: wrap; }
         .empty-state { text-align: center; padding: 3rem; color: #6b7280; }
 
+        /* Shop Groups (Accordion) */
+        .shop-group { margin-bottom: 1rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .shop-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: #f9fafb; cursor: pointer; border-bottom: 1px solid #e5e7eb; transition: background 0.2s; }
+        .shop-header:hover { background: #f3f4f6; }
+        .shop-header h3 { font-size: 1.125rem; font-weight: 600; color: #111827; margin: 0; }
+        .shop-header .chevron { font-size: 1.25rem; color: #6b7280; transition: transform 0.2s; }
+        .shop-header .chevron.expanded { transform: rotate(180deg); }
+        .shop-monitors { }
+        .shop-monitors.collapsed { display: none; }
+        .shop-stats { font-size: 0.875rem; color: #6b7280; margin-left: 0.5rem; }
+
         /* Badges */
         .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500; }
         .badge.green { background: #d1fae5; color: #065f46; }
@@ -1096,39 +1107,86 @@
                 container.innerHTML = '<div class="empty-state">Zatím nemáte žádný monitor. Nejprve přidejte e-shop, pak můžete vytvořit monitory.</div>';
                 return;
             }
-            container.innerHTML = monitors.map(monitor => {
-                const shop = shops.find(s => s.id === monitor.shopId);
-                const statusIcon = monitor.status === 'up' ? '✓' : monitor.status === 'down' ? '✗' : '?';
-                const statusColor = monitor.status === 'up' ? 'green' : monitor.status === 'down' ? 'red' : 'yellow';
-                const badgeClass = monitor.status === 'up' ? 'green' : monitor.status === 'down' ? 'red' : 'yellow';
-                const lastCheck = monitor.lastCheck ? new Date(monitor.lastCheck).toLocaleString('cs-CZ') : 'Nikdy';
-                const intervalText = monitor.interval === 60000 ? '1 min' : monitor.interval === 300000 ? '5 min' : monitor.interval === 600000 ? '10 min' : '30 min';
 
-                return `
-                    <div class="list-item">
-                        <div class="flex items-center gap-3 flex-1">
-                            <span class="status-icon ${statusColor}">${statusIcon}</span>
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <h3>${monitor.url}</h3>
-                                    <span class="badge ${badgeClass}">${monitor.status.toUpperCase()}</span>
-                                </div>
-                                <div class="list-meta">
-                                    <span>Shop: ${shop ? shop.name : 'Neznámý'}</span>
-                                    <span>Interval: ${intervalText}</span>
-                                    ${monitor.responseTime ? `<span>Odezva: ${monitor.responseTime}ms</span>` : ''}
-                                    <span>Poslední kontrola: ${lastCheck}</span>
+            // Group monitors by shop
+            const monitorsByShop = {};
+            monitors.forEach(monitor => {
+                if (!monitorsByShop[monitor.shopId]) {
+                    monitorsByShop[monitor.shopId] = [];
+                }
+                monitorsByShop[monitor.shopId].push(monitor);
+            });
+
+            // Get shops with monitors and sort alphabetically
+            const shopsWithMonitors = shops
+                .filter(shop => monitorsByShop[shop.id] && monitorsByShop[shop.id].length > 0)
+                .sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+
+            container.innerHTML = shopsWithMonitors.map(shop => {
+                const shopMonitors = monitorsByShop[shop.id];
+                const upCount = shopMonitors.filter(m => m.status === 'up').length;
+                const downCount = shopMonitors.filter(m => m.status === 'down').length;
+
+                const monitorsHTML = shopMonitors.map(monitor => {
+                    const statusIcon = monitor.status === 'up' ? '✓' : monitor.status === 'down' ? '✗' : '?';
+                    const statusColor = monitor.status === 'up' ? 'green' : monitor.status === 'down' ? 'red' : 'yellow';
+                    const badgeClass = monitor.status === 'up' ? 'green' : monitor.status === 'down' ? 'red' : 'yellow';
+                    const lastCheck = monitor.lastCheck ? new Date(monitor.lastCheck).toLocaleString('cs-CZ') : 'Nikdy';
+                    const intervalText = monitor.interval === 60000 ? '1 min' : monitor.interval === 300000 ? '5 min' : monitor.interval === 600000 ? '10 min' : '30 min';
+
+                    return `
+                        <div class="list-item">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-icon ${statusColor}">${statusIcon}</span>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3>${monitor.url}</h3>
+                                        <span class="badge ${badgeClass}">${monitor.status.toUpperCase()}</span>
+                                    </div>
+                                    <div class="list-meta">
+                                        <span>Interval: ${intervalText}</span>
+                                        ${monitor.responseTime ? `<span>Odezva: ${monitor.responseTime}ms</span>` : ''}
+                                        <span>Poslední kontrola: ${lastCheck}</span>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="flex gap-2">
+                                <button class="btn btn-secondary btn-small" onclick="testMonitor(${monitor.id}, event)">Test</button>
+                                <button class="btn btn-secondary btn-small" onclick="openEditMonitorModal(${monitor.id})">Upravit</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteMonitor(${monitor.id})">Smazat</button>
+                            </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button class="btn btn-secondary btn-small" onclick="testMonitor(${monitor.id}, event)">Test</button>
-                            <button class="btn btn-secondary btn-small" onclick="openEditMonitorModal(${monitor.id})">Upravit</button>
-                            <button class="btn btn-danger btn-small" onclick="deleteMonitor(${monitor.id})">Smazat</button>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="shop-group">
+                        <div class="shop-header" onclick="toggleShopGroup(${shop.id})">
+                            <div style="display: flex; align-items: center;">
+                                <h3>📦 ${shop.name}</h3>
+                                <span class="shop-stats">(${shopMonitors.length} ${shopMonitors.length === 1 ? 'monitor' : 'monitorů'} · <span style="color: #059669;">${upCount} UP</span>${downCount > 0 ? ` · <span style="color: #dc2626;">${downCount} DOWN</span>` : ''})</span>
+                            </div>
+                            <span class="chevron expanded" id="chevron-${shop.id}">▼</span>
+                        </div>
+                        <div class="shop-monitors" id="shop-monitors-${shop.id}">
+                            ${monitorsHTML}
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function toggleShopGroup(shopId) {
+            const monitorsDiv = document.getElementById(`shop-monitors-${shopId}`);
+            const chevron = document.getElementById(`chevron-${shopId}`);
+
+            if (monitorsDiv.classList.contains('collapsed')) {
+                monitorsDiv.classList.remove('collapsed');
+                chevron.classList.add('expanded');
+            } else {
+                monitorsDiv.classList.add('collapsed');
+                chevron.classList.remove('expanded');
+            }
         }
 
         function renderIncidents() {
