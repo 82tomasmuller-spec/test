@@ -490,13 +490,22 @@
                 <button class="close-btn" onclick="closeModal('change-password-modal')">&times;</button>
             </div>
             <form onsubmit="changePassword(event)">
+                <!-- Error message -->
+                <div id="password-error" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; font-size: 0.875rem;"></div>
+
                 <div class="form-group">
                     <label for="new-password">Nové heslo *</label>
-                    <input type="password" id="new-password" required minlength="6">
+                    <div style="position: relative;">
+                        <input type="password" id="new-password" required minlength="6" style="padding-right: 2.5rem;">
+                        <button type="button" onclick="togglePasswordVisibility('new-password')" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer; font-size: 1.25rem; padding: 0.25rem;" title="Zobrazit/skrýt heslo">👁️</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="confirm-new-password">Potvrdit nové heslo *</label>
-                    <input type="password" id="confirm-new-password" required minlength="6">
+                    <div style="position: relative;">
+                        <input type="password" id="confirm-new-password" required minlength="6" style="padding-right: 2.5rem;">
+                        <button type="button" onclick="togglePasswordVisibility('confirm-new-password')" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer; font-size: 1.25rem; padding: 0.25rem;" title="Zobrazit/skrýt heslo">👁️</button>
+                    </div>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('change-password-modal')">Zrušit</button>
@@ -733,6 +742,30 @@
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
+
+            // Clear error message when closing password modal
+            if (modalId === 'change-password-modal') {
+                const errorDiv = document.getElementById('password-error');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                    errorDiv.textContent = '';
+                }
+            }
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = event.target;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🙈'; // Hide icon
+                button.title = 'Skrýt heslo';
+            } else {
+                input.type = 'password';
+                button.textContent = '👁️'; // Show icon
+                button.title = 'Zobrazit heslo';
+            }
         }
 
         // Shop functions
@@ -1048,14 +1081,20 @@
             event.preventDefault();
             const newPassword = document.getElementById('new-password').value;
             const confirmPassword = document.getElementById('confirm-new-password').value;
+            const errorDiv = document.getElementById('password-error');
+
+            // Hide previous errors
+            errorDiv.style.display = 'none';
 
             if (newPassword !== confirmPassword) {
-                alert('Nová hesla se neshodují!');
+                errorDiv.textContent = '❌ Hesla se neshodují! Zkontrolujte, že jste zadali stejné heslo do obou polí.';
+                errorDiv.style.display = 'block';
                 return;
             }
 
             if (newPassword.length < 6) {
-                alert('Heslo musí mít alespoň 6 znaků!');
+                errorDiv.textContent = '❌ Heslo musí mít alespoň 6 znaků!';
+                errorDiv.style.display = 'block';
                 return;
             }
 
