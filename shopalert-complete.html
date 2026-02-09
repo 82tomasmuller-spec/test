@@ -862,23 +862,27 @@
             button.style.background = '#f59e0b';
             button.disabled = true;
 
-            // Perform check
-            simulateCheck(monitorId);
+            // Perform check WITHOUT rendering (pass skipRender flag)
+            simulateCheck(monitorId, true);
 
-            // Restore button after 1 second
+            // Show success state after 1 second
             setTimeout(() => {
                 button.innerHTML = '✓ Hotovo';
                 button.style.background = '#059669';
 
+                // Restore button and refresh page after another 0.8s
                 setTimeout(() => {
                     button.innerHTML = originalText;
                     button.style.background = originalBg;
                     button.disabled = false;
+
+                    // NOW refresh the page to show updated data
+                    init();
                 }, 800);
             }, 1000);
         }
 
-        function simulateCheck(monitorId) {
+        function simulateCheck(monitorId, skipRender = false) {
             const monitor = monitors.find(m => m.id === monitorId);
             if (!monitor) return;
 
@@ -934,7 +938,11 @@
             }
 
             saveUserData();
-            init();
+
+            // Only refresh UI if not skipping render (for smooth animations)
+            if (!skipRender) {
+                init();
+            }
         }
 
         // Automatic monitoring functions
