@@ -856,27 +856,49 @@
             const monitor = monitors.find(m => m.id === monitorId);
             if (!monitor) return;
 
-            // Realistic simulation: 98% uptime (very rare downtime)
-            const isUp = Math.random() < 0.98;
+            // Store previous status
+            const previousStatus = monitor.status;
+
+            // Realistic simulation: 99.5% uptime (extremely rare downtime)
+            const isUp = Math.random() < 0.995;
             monitor.status = isUp ? 'up' : 'down';
             monitor.lastCheck = new Date().toISOString();
             monitor.responseTime = isUp ? Math.floor(Math.random() * 300) + 50 : Math.floor(Math.random() * 2000) + 1000;
 
-            // Create incident only if down AND random chance (rare)
-            // This prevents too many false incidents
-            if (monitor.status === 'down' && Math.random() > 0.85) {
-                const incident = {
-                    id: Date.now(),
-                    monitorId: monitor.id,
-                    status: 'ongoing',
-                    startedAt: new Date().toISOString(),
-                    errorMessage: 'HTTP 503 Service Unavailable'
-                };
-                incidents.push(incident);
+            // Track consecutive failures
+            if (!monitor.consecutiveFailures) {
+                monitor.consecutiveFailures = 0;
             }
 
-            // Auto-resolve old incidents if monitor is up
-            if (monitor.status === 'up') {
+            if (monitor.status === 'down') {
+                monitor.consecutiveFailures++;
+            } else {
+                monitor.consecutiveFailures = 0;
+            }
+
+            // Create incident ONLY if down 3+ times in a row (real persistent problem)
+            // This prevents temporary glitches from creating incidents
+            if (monitor.consecutiveFailures >= 3) {
+                // Check if there's already an ongoing incident for this monitor
+                const hasOngoingIncident = incidents.some(
+                    i => i.monitorId === monitor.id && i.status === 'ongoing'
+                );
+
+                // Only create new incident if there isn't one already
+                if (!hasOngoingIncident) {
+                    const incident = {
+                        id: Date.now(),
+                        monitorId: monitor.id,
+                        status: 'ongoing',
+                        startedAt: new Date().toISOString(),
+                        errorMessage: 'HTTP 503 Service Unavailable'
+                    };
+                    incidents.push(incident);
+                }
+            }
+
+            // Auto-resolve incidents when monitor recovers
+            if (monitor.status === 'up' && previousStatus === 'down') {
                 incidents.forEach(incident => {
                     if (incident.monitorId === monitor.id && incident.status === 'ongoing') {
                         incident.status = 'resolved';
