@@ -288,8 +288,10 @@
 
             <!-- Profile -->
             <div id="profile" class="section">
-                <h2>Profil uživatele</h2>
-                <div class="profile-card">
+                <h2>Můj účet</h2>
+
+                <!-- Základní informace -->
+                <div class="profile-card" style="margin-bottom: 1.5rem;">
                     <div class="profile-header">
                         <div class="profile-avatar" id="profile-avatar">U</div>
                         <h3 id="profile-name">Uživatel</h3>
@@ -310,6 +312,41 @@
                         <div class="info-row">
                             <span class="info-label">Monitorů:</span>
                             <span class="info-value" id="profile-monitors">0</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                        <button class="btn btn-primary" onclick="openModal('change-password-modal')" style="width: 100%; margin-bottom: 0.5rem;">🔒 Změnit heslo</button>
+                        <button class="btn btn-secondary" onclick="openModal('billing-modal')" style="width: 100%;">💳 Fakturační údaje</button>
+                    </div>
+                </div>
+
+                <!-- Fakturační údaje -->
+                <div class="profile-card">
+                    <h3 style="margin-bottom: 1rem;">Fakturační údaje</h3>
+                    <div class="profile-info" id="billing-info">
+                        <div class="info-row">
+                            <span class="info-label">Firma/Jméno:</span>
+                            <span class="info-value" id="billing-company">Nevyplněno</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">IČO:</span>
+                            <span class="info-value" id="billing-ico">Nevyplněno</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">DIČ:</span>
+                            <span class="info-value" id="billing-dic">Nevyplněno</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Adresa:</span>
+                            <span class="info-value" id="billing-address">Nevyplněno</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Město:</span>
+                            <span class="info-value" id="billing-city">Nevyplněno</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">PSČ:</span>
+                            <span class="info-value" id="billing-zip">Nevyplněno</span>
                         </div>
                     </div>
                 </div>
@@ -445,6 +482,78 @@
         </div>
     </div>
 
+    <!-- Modal pro změnu hesla -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Změnit heslo</h3>
+                <button class="close-btn" onclick="closeModal('change-password-modal')">&times;</button>
+            </div>
+            <form onsubmit="changePassword(event)">
+                <div class="form-group">
+                    <label for="current-password">Současné heslo *</label>
+                    <input type="password" id="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Nové heslo *</label>
+                    <input type="password" id="new-password" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirm-new-password">Potvrdit nové heslo *</label>
+                    <input type="password" id="confirm-new-password" required minlength="6">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('change-password-modal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Změnit heslo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pro fakturační údaje -->
+    <div id="billing-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Fakturační údaje</h3>
+                <button class="close-btn" onclick="closeModal('billing-modal')">&times;</button>
+            </div>
+            <form onsubmit="updateBilling(event)">
+                <div class="form-group">
+                    <label for="billing-company-input">Firma / Jméno a příjmení *</label>
+                    <input type="text" id="billing-company-input" required placeholder="např. Firma s.r.o. nebo Jan Novák">
+                </div>
+                <div class="form-group">
+                    <label for="billing-ico-input">IČO</label>
+                    <input type="text" id="billing-ico-input" placeholder="12345678">
+                </div>
+                <div class="form-group">
+                    <label for="billing-dic-input">DIČ</label>
+                    <input type="text" id="billing-dic-input" placeholder="CZ12345678">
+                </div>
+                <div class="form-group">
+                    <label for="billing-address-input">Ulice a číslo popisné *</label>
+                    <input type="text" id="billing-address-input" required placeholder="např. Hlavní 123">
+                </div>
+                <div class="form-group">
+                    <label for="billing-city-input">Město *</label>
+                    <input type="text" id="billing-city-input" required placeholder="např. Praha">
+                </div>
+                <div class="form-group">
+                    <label for="billing-zip-input">PSČ *</label>
+                    <input type="text" id="billing-zip-input" required placeholder="120 00" pattern="[0-9\s]{5,6}">
+                </div>
+                <div class="form-group">
+                    <label for="billing-country-input">Země</label>
+                    <input type="text" id="billing-country-input" value="Česká republika" placeholder="Česká republika">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('billing-modal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Uložit údaje</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Global state
         let users = JSON.parse(localStorage.getItem('shopalert_users') || '[]');
@@ -452,6 +561,7 @@
         let shops = [];
         let monitors = [];
         let incidents = [];
+        let monitoringIntervals = new Map(); // Track automatic monitoring intervals
 
         // Auth functions
         function switchAuthTab(tab) {
@@ -489,7 +599,16 @@
                 name,
                 email,
                 password, // V produkci by bylo hashované!
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                billing: {
+                    company: '',
+                    ico: '',
+                    dic: '',
+                    address: '',
+                    city: '',
+                    zip: '',
+                    country: 'Česká republika'
+                }
             };
 
             users.push(user);
@@ -558,6 +677,7 @@
             renderIncidents();
             renderProfile();
             loadShopSelect();
+            startAllMonitoring(); // Start automatic monitoring for all monitors
         }
 
         // Show section
@@ -668,6 +788,7 @@
             closeModal('add-monitor-modal');
             event.target.reset();
             init();
+            startMonitoring(monitor); // Start automatic monitoring immediately
         }
 
         function updateMonitor(event) {
@@ -683,10 +804,12 @@
             saveUserData();
             closeModal('edit-monitor-modal');
             init();
+            startMonitoring(monitor); // Restart monitoring with new interval
         }
 
         function deleteMonitor(id) {
             if (!confirm('Opravdu chcete smazat tento monitor?')) return;
+            stopMonitoring(id); // Stop automatic monitoring
             monitors = monitors.filter(m => m.id !== id);
             saveUserData();
             init();
@@ -714,6 +837,51 @@
 
             saveUserData();
             init();
+        }
+
+        // Automatic monitoring functions
+        function startMonitoring(monitor) {
+            // Stop existing interval if any
+            if (monitoringIntervals.has(monitor.id)) {
+                clearInterval(monitoringIntervals.get(monitor.id));
+            }
+
+            // Perform initial check immediately
+            simulateCheck(monitor.id);
+
+            // Set up periodic checks
+            const intervalId = setInterval(() => {
+                simulateCheck(monitor.id);
+            }, monitor.interval);
+
+            monitoringIntervals.set(monitor.id, intervalId);
+        }
+
+        function stopMonitoring(monitorId) {
+            if (monitoringIntervals.has(monitorId)) {
+                clearInterval(monitoringIntervals.get(monitorId));
+                monitoringIntervals.delete(monitorId);
+            }
+        }
+
+        function startAllMonitoring() {
+            // Clear all existing intervals
+            monitoringIntervals.forEach(intervalId => clearInterval(intervalId));
+            monitoringIntervals.clear();
+
+            // Start monitoring for all active monitors
+            monitors.forEach(monitor => {
+                if (monitor.status === 'unknown') {
+                    // Perform immediate first check for new monitors
+                    simulateCheck(monitor.id);
+                }
+                startMonitoring(monitor);
+            });
+        }
+
+        function stopAllMonitoring() {
+            monitoringIntervals.forEach(intervalId => clearInterval(intervalId));
+            monitoringIntervals.clear();
         }
 
         // Render functions
@@ -837,6 +1005,93 @@
             document.getElementById('profile-since').textContent = new Date(currentUser.createdAt).toLocaleDateString('cs-CZ');
             document.getElementById('profile-shops').textContent = shops.length;
             document.getElementById('profile-monitors').textContent = monitors.length;
+
+            // Render billing info
+            const billing = currentUser.billing || {};
+            document.getElementById('billing-company').textContent = billing.company || 'Nevyplněno';
+            document.getElementById('billing-ico').textContent = billing.ico || 'Nevyplněno';
+            document.getElementById('billing-dic').textContent = billing.dic || 'Nevyplněno';
+            document.getElementById('billing-address').textContent = billing.address || 'Nevyplněno';
+            document.getElementById('billing-city').textContent = billing.city || 'Nevyplněno';
+            document.getElementById('billing-zip').textContent = billing.zip || 'Nevyplněno';
+
+            // Populate billing modal
+            if (billing.company) {
+                document.getElementById('billing-company-input').value = billing.company;
+                document.getElementById('billing-ico-input').value = billing.ico || '';
+                document.getElementById('billing-dic-input').value = billing.dic || '';
+                document.getElementById('billing-address-input').value = billing.address || '';
+                document.getElementById('billing-city-input').value = billing.city || '';
+                document.getElementById('billing-zip-input').value = billing.zip || '';
+                document.getElementById('billing-country-input').value = billing.country || 'Česká republika';
+            }
+        }
+
+        function changePassword(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-new-password').value;
+
+            if (currentUser.password !== currentPassword) {
+                alert('Současné heslo není správné!');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('Nová hesla se neshodují!');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                alert('Heslo musí mít alespoň 6 znaků!');
+                return;
+            }
+
+            // Update password
+            currentUser.password = newPassword;
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                users[userIndex].password = newPassword;
+                localStorage.setItem('shopalert_users', JSON.stringify(users));
+                localStorage.setItem('shopalert_currentUser', JSON.stringify(currentUser));
+            }
+
+            alert('Heslo bylo úspěšně změněno!');
+            closeModal('change-password-modal');
+            event.target.reset();
+        }
+
+        function updateBilling(event) {
+            event.preventDefault();
+
+            const billing = {
+                company: document.getElementById('billing-company-input').value,
+                ico: document.getElementById('billing-ico-input').value,
+                dic: document.getElementById('billing-dic-input').value,
+                address: document.getElementById('billing-address-input').value,
+                city: document.getElementById('billing-city-input').value,
+                zip: document.getElementById('billing-zip-input').value,
+                country: document.getElementById('billing-country-input').value
+            };
+
+            // Update current user
+            if (!currentUser.billing) {
+                currentUser.billing = {};
+            }
+            currentUser.billing = billing;
+
+            // Update in users array
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                users[userIndex].billing = billing;
+                localStorage.setItem('shopalert_users', JSON.stringify(users));
+                localStorage.setItem('shopalert_currentUser', JSON.stringify(currentUser));
+            }
+
+            alert('Fakturační údaje byly úspěšně uloženy!');
+            closeModal('billing-modal');
+            renderProfile();
         }
 
         function loadShopSelect(selectId = 'monitor-shop') {
