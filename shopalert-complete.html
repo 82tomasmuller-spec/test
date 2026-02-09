@@ -1055,9 +1055,17 @@
                 localStorage.setItem('shopalert_currentUser', JSON.stringify(currentUser));
             }
 
-            alert('Heslo bylo úspěšně změněno!');
-            closeModal('change-password-modal');
-            event.target.reset();
+            // Show success feedback
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '✓ Uloženo';
+            submitBtn.style.background = '#059669';
+
+            setTimeout(() => {
+                closeModal('change-password-modal');
+                event.target.reset();
+                submitBtn.innerHTML = 'Změnit heslo';
+                submitBtn.style.background = '';
+            }, 800);
         }
 
         function updateBilling(event) {
@@ -1087,9 +1095,17 @@
                 localStorage.setItem('shopalert_currentUser', JSON.stringify(currentUser));
             }
 
-            alert('Fakturační údaje byly úspěšně uloženy!');
-            closeModal('billing-modal');
-            renderProfile();
+            // Show success feedback
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '✓ Uloženo';
+            submitBtn.style.background = '#059669';
+
+            setTimeout(() => {
+                closeModal('billing-modal');
+                renderProfile();
+                submitBtn.innerHTML = 'Uložit údaje';
+                submitBtn.style.background = '';
+            }, 800);
         }
 
         async function loadFromARES() {
@@ -1169,11 +1185,15 @@
 
                 document.getElementById('billing-country-input').value = 'Česká republika';
 
-                alert('✓ Údaje byly úspěšně načteny z ARES');
+                // Show success state
+                button.innerHTML = '✓ Načteno';
+                button.style.background = '#059669';
 
-                // Restore button
-                button.innerHTML = originalText;
-                button.disabled = false;
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '';
+                    button.disabled = false;
+                }, 1500);
 
             } catch (error) {
                 alert(`Chyba při načítání z ARES: ${error.message}\n\nZkontrolujte IČO a zkuste to znovu.`);
@@ -1212,12 +1232,23 @@
             URL.revokeObjectURL(url);
         }
 
-        // Close modal on outside click
+        // Close modal on outside click (but not on text selection)
         document.querySelectorAll('.modal').forEach(modal => {
+            let mouseDownTarget = null;
+
+            modal.addEventListener('mousedown', (e) => {
+                mouseDownTarget = e.target;
+            });
+
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
+                // Only close if click started and ended on modal background (not during text selection)
+                if (e.target === modal && mouseDownTarget === modal) {
+                    const selection = window.getSelection().toString();
+                    if (!selection) { // No text selected
+                        modal.classList.remove('active');
+                    }
                 }
+                mouseDownTarget = null;
             });
         });
 
