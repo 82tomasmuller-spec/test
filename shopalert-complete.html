@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopAlert - E-Shop Uptime Guard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f9fafb; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
+
+        /* Auth Page */
+        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .auth-box { background: white; padding: 3rem; border-radius: 1rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 450px; width: 90%; }
+        .auth-box h1 { text-align: center; color: #2563eb; margin-bottom: 0.5rem; font-size: 2rem; }
+        .auth-box p { text-align: center; color: #6b7280; margin-bottom: 2rem; }
+        .auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+        .auth-tab { flex: 1; padding: 0.75rem; border: none; background: #f3f4f6; cursor: pointer; border-radius: 0.5rem; font-weight: 500; transition: all 0.2s; }
+        .auth-tab.active { background: #2563eb; color: white; }
+        .hidden { display: none !important; }
+
+        /* Navigation */
+        nav { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1rem 0; }
+        .nav-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #2563eb; cursor: pointer; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; }
+        .nav-links button { padding: 0.5rem 1rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #374151; transition: color 0.2s; }
+        .nav-links button:hover { color: #2563eb; }
+        .nav-links button.active { color: #2563eb; border-bottom: 2px solid #2563eb; }
+        .user-menu { position: relative; }
+        .user-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; border-radius: 0.5rem; cursor: pointer; }
+        .user-dropdown { display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; background: white; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; }
+        .user-dropdown.active { display: block; }
+        .user-dropdown button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; }
+        .user-dropdown button:hover { background: #f3f4f6; }
+
+        /* Main Content */
+        main { padding: 2rem 0; min-height: 70vh; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h2 { font-size: 1.875rem; font-weight: bold; color: #111827; margin-bottom: 1.5rem; }
+
+        /* Cards Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        .stat-card { display: flex; align-items: center; }
+        .stat-icon { width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; }
+        .stat-icon.blue { background: #dbeafe; color: #2563eb; }
+        .stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+        .stat-icon.green { background: #d1fae5; color: #059669; }
+        .stat-label { font-size: 0.875rem; color: #6b7280; }
+        .stat-value { font-size: 1.875rem; font-weight: bold; color: #111827; }
+
+        /* Alert Box */
+        .alert { background: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.5rem; padding: 1.5rem; }
+        .alert h3 { font-size: 1.125rem; font-weight: 600; color: #1e3a8a; margin-bottom: 0.5rem; }
+        .alert p { color: #1e40af; }
+
+        /* List Items */
+        .list { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .list-item { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .list-item:last-child { border-bottom: none; }
+        .list-item:hover { background: #f9fafb; }
+        .list-item h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .list-item a { color: #2563eb; text-decoration: none; font-size: 0.875rem; }
+        .list-item a:hover { text-decoration: underline; }
+        .list-meta { margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280; display: flex; gap: 1rem; flex-wrap: wrap; }
+        .empty-state { text-align: center; padding: 3rem; color: #6b7280; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500; }
+        .badge.green { background: #d1fae5; color: #065f46; }
+        .badge.red { background: #fee2e2; color: #991b1b; }
+        .badge.yellow { background: #fef3c7; color: #92400e; }
+
+        /* Buttons */
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-small { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+        .btn-full { width: 100%; }
+
+        /* Header with Button */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 2rem; border-radius: 0.5rem; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-header h3 { font-size: 1.25rem; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; }
+        .close-btn:hover { color: #111827; }
+
+        /* Form */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #2563eb; }
+        .form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem; }
+        .form-link { text-align: center; margin-top: 1rem; color: #6b7280; font-size: 0.875rem; }
+        .form-link a { color: #2563eb; text-decoration: none; font-weight: 500; }
+        .form-link a:hover { text-decoration: underline; }
+
+        /* Flex Layouts */
+        .flex { display: flex; }
+        .flex-1 { flex: 1; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+
+        /* Status Icons */
+        .status-icon { font-size: 1.5rem; margin-right: 0.75rem; }
+        .status-icon.green { color: #059669; }
+        .status-icon.red { color: #dc2626; }
+        .status-icon.yellow { color: #d97706; }
+
+        /* Profile Page */
+        .profile-card { background: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 600px; }
+        .profile-header { text-align: center; margin-bottom: 2rem; }
+        .profile-avatar { width: 80px; height: 80px; background: #2563eb; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; margin: 0 auto 1rem; }
+        .profile-info { display: grid; gap: 1rem; }
+        .info-row { display: flex; justify-content: space-between; padding: 1rem; background: #f9fafb; border-radius: 0.5rem; }
+        .info-label { font-weight: 500; color: #6b7280; }
+        .info-value { color: #111827; }
+    </style>
+</head>
+<body>
+    <!-- Auth Page -->
+    <div id="auth-page" class="auth-container">
+        <div class="auth-box">
+            <h1>🛡️ ShopAlert</h1>
+            <p>E-Shop Uptime Guard - Monitoring 24/7</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Přihlášení</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Registrace</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required placeholder="vas@email.cz">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Heslo</label>
+                    <input type="password" id="login-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Přihlásit se</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="register-name">Jméno</label>
+                    <input type="text" id="register-name" required placeholder="Jan Novák">
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" required placeholder="vas@email.cz">
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Heslo</label>
+                    <input type="password" id="register-password" required minlength="6" placeholder="Minimálně 6 znaků">
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm">Potvrdit heslo</label>
+                    <input type="password" id="register-confirm" required placeholder="Zopakujte heslo">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Zaregistrovat se</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Page -->
+    <div id="app-page" class="hidden">
+        <nav>
+            <div class="container">
+                <div class="nav-content">
+                    <div class="logo" onclick="showSection('dashboard')">ShopAlert</div>
+                    <div class="nav-links">
+                        <button onclick="showSection('dashboard')" id="nav-dashboard">Dashboard</button>
+                        <button onclick="showSection('shops')" id="nav-shops">E-shopy</button>
+                        <button onclick="showSection('monitors')" id="nav-monitors">Monitory</button>
+                        <button onclick="showSection('incidents')" id="nav-incidents">Incidenty</button>
+                        <div class="user-menu">
+                            <div class="user-btn" onclick="toggleUserMenu()">
+                                <span id="user-name">Uživatel</span>
+                                <span>▼</span>
+                            </div>
+                            <div class="user-dropdown" id="user-dropdown">
+                                <button onclick="showSection('profile')">👤 Profil</button>
+                                <button onclick="handleLogout()">🚪 Odhlásit se</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container">
+            <!-- Dashboard -->
+            <div id="dashboard" class="section active">
+                <h2>Dashboard</h2>
+                <div class="grid">
+                    <div class="card stat-card">
+                        <div class="stat-icon blue">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-label">E-shopy</div>
+                            <div class="stat-value" id="stat-shops">0</div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon purple">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-label">Monitory</div>
+                            <div class="stat-value" id="stat-monitors">0</div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon green">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-label">Uptime</div>
+                            <div class="stat-value" id="stat-uptime">100%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert">
+                    <h3>✅ ShopAlert je připraven!</h3>
+                    <p>Přidejte svůj první e-shop a začněte monitorovat jeho dostupnost 24/7. Budete okamžitě upozorněni na jakékoli výpadky.</p>
+                </div>
+            </div>
+
+            <!-- E-shopy -->
+            <div id="shops" class="section">
+                <div class="header-row">
+                    <h2>E-shopy</h2>
+                    <button class="btn btn-primary" onclick="openAddShopModal()">+ Přidat e-shop</button>
+                </div>
+                <div class="list" id="shops-list">
+                    <div class="empty-state">Zatím nemáte žádný e-shop. Přidejte svůj první e-shop kliknutím na tlačítko výše.</div>
+                </div>
+            </div>
+
+            <!-- Monitory -->
+            <div id="monitors" class="section">
+                <div class="header-row">
+                    <h2>Monitory</h2>
+                    <button class="btn btn-primary" onclick="openAddMonitorModal()">+ Přidat monitor</button>
+                </div>
+                <div class="list" id="monitors-list">
+                    <div class="empty-state">Zatím nemáte žádný monitor. Nejprve přidejte e-shop, pak můžete vytvořit monitory.</div>
+                </div>
+            </div>
+
+            <!-- Incidenty -->
+            <div id="incidents" class="section">
+                <div class="header-row">
+                    <h2>Incidenty</h2>
+                    <button class="btn btn-secondary" onclick="exportIncidents()">Export CSV</button>
+                </div>
+                <div class="list" id="incidents-list">
+                    <div class="empty-state">Zatím nejsou žádné incidenty. Skvělá práce!</div>
+                </div>
+            </div>
+
+            <!-- Profile -->
+            <div id="profile" class="section">
+                <h2>Profil uživatele</h2>
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar" id="profile-avatar">U</div>
+                        <h3 id="profile-name">Uživatel</h3>
+                    </div>
+                    <div class="profile-info">
+                        <div class="info-row">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value" id="profile-email">email@example.com</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Členem od:</span>
+                            <span class="info-value" id="profile-since">Dnes</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">E-shopů:</span>
+                            <span class="info-value" id="profile-shops">0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Monitorů:</span>
+                            <span class="info-value" id="profile-monitors">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal pro přidání e-shopu -->
+    <div id="add-shop-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Přidat e-shop</h3>
+                <button class="close-btn" onclick="closeModal('add-shop-modal')">&times;</button>
+            </div>
+            <form onsubmit="addShop(event)">
+                <div class="form-group">
+                    <label for="shop-name">Název e-shopu *</label>
+                    <input type="text" id="shop-name" required placeholder="např. Můj E-shop.cz">
+                </div>
+                <div class="form-group">
+                    <label for="shop-url">URL adresa *</label>
+                    <input type="url" id="shop-url" required placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="shop-description">Popis (volitelné)</label>
+                    <textarea id="shop-description" rows="3" placeholder="Stručný popis vašeho e-shopu"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-shop-modal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Přidat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pro úpravu e-shopu -->
+    <div id="edit-shop-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Upravit e-shop</h3>
+                <button class="close-btn" onclick="closeModal('edit-shop-modal')">&times;</button>
+            </div>
+            <form onsubmit="updateShop(event)">
+                <input type="hidden" id="edit-shop-id">
+                <div class="form-group">
+                    <label for="edit-shop-name">Název e-shopu *</label>
+                    <input type="text" id="edit-shop-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-shop-url">URL adresa *</label>
+                    <input type="url" id="edit-shop-url" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-shop-description">Popis (volitelné)</label>
+                    <textarea id="edit-shop-description" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('edit-shop-modal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Uložit změny</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pro přidání monitoru -->
+    <div id="add-monitor-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Přidat monitor</h3>
+                <button class="close-btn" onclick="closeModal('add-monitor-modal')">&times;</button>
+            </div>
+            <form onsubmit="addMonitor(event)">
+                <div class="form-group">
+                    <label for="monitor-shop">E-shop *</label>
+                    <select id="monitor-shop" required>
+                        <option value="">Vyberte e-shop</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="monitor-url">URL k monitorování *</label>
+                    <input type="url" id="monitor-url" required placeholder="https://example.com/checkout">
+                </div>
+                <div class="form-group">
+                    <label for="monitor-interval">Interval kontroly</label>
+                    <select id="monitor-interval">
+                        <option value="60000">1 minuta</option>
+                        <option value="300000" selected>5 minut</option>
+                        <option value="600000">10 minut</option>
+                        <option value="1800000">30 minut</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-monitor-modal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Přidat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pro úpravu monitoru -->
+    <div id="edit-monitor-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Upravit monitor</h3>
+                <button class="close-btn" onclick="closeModal('edit-monitor-modal')">&times;</button>
+            </div>
+            <form onsubmit="updateMonitor(event)">
+                <input type="hidden" id="edit-monitor-id">
+                <div class="form-group">
+                    <label for="edit-monitor-shop">E-shop *</label>
+                    <select id="edit-monitor-shop" required>
+                        <option value="">Vyberte e-shop</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-monitor-url">URL k monitorování *</label>
+                    <input type="url" id="edit-monitor-url" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-monitor-interval">Interval kontroly</label>
+                    <select id="edit-monitor-interval">
+                        <option value="60000">1 minuta</option>
+                        <option value="300000">5 minut</option>
+                        <option value="600000">10 minut</option>
+                        <option value="1800000">30 minut</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('edit-monitor-modal')">Zrušit</button>
+                    <button type="submit" class="btn btn-primary">Uložit změny</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let users = JSON.parse(localStorage.getItem('shopalert_users') || '[]');
+        let currentUser = JSON.parse(localStorage.getItem('shopalert_currentUser') || 'null');
+        let shops = [];
+        let monitors = [];
+        let incidents = [];
+
+        // Auth functions
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tab === 'login') {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            } else {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+
+            if (password !== confirm) {
+                alert('Hesla se neshodují!');
+                return;
+            }
+
+            if (users.find(u => u.email === email)) {
+                alert('Uživatel s tímto emailem už existuje!');
+                return;
+            }
+
+            const user = {
+                id: Date.now(),
+                name,
+                email,
+                password, // V produkci by bylo hashované!
+                createdAt: new Date().toISOString()
+            };
+
+            users.push(user);
+            localStorage.setItem('shopalert_users', JSON.stringify(users));
+
+            alert('Registrace úspěšná! Nyní se přihlaste.');
+            switchAuthTab('login');
+            event.target.reset();
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (!user) {
+                alert('Neplatné přihlašovací údaje!');
+                return;
+            }
+
+            currentUser = user;
+            localStorage.setItem('shopalert_currentUser', JSON.stringify(currentUser));
+
+            showApp();
+        }
+
+        function handleLogout() {
+            if (!confirm('Opravdu se chcete odhlásit?')) return;
+            currentUser = null;
+            localStorage.removeItem('shopalert_currentUser');
+            location.reload();
+        }
+
+        function showApp() {
+            document.getElementById('auth-page').classList.add('hidden');
+            document.getElementById('app-page').classList.remove('hidden');
+            document.getElementById('user-name').textContent = currentUser.name;
+            loadUserData();
+            init();
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('user-dropdown').classList.toggle('active');
+        }
+
+        // Data functions
+        function loadUserData() {
+            shops = JSON.parse(localStorage.getItem(`shopalert_shops_${currentUser.id}`) || '[]');
+            monitors = JSON.parse(localStorage.getItem(`shopalert_monitors_${currentUser.id}`) || '[]');
+            incidents = JSON.parse(localStorage.getItem(`shopalert_incidents_${currentUser.id}`) || '[]');
+        }
+
+        function saveUserData() {
+            localStorage.setItem(`shopalert_shops_${currentUser.id}`, JSON.stringify(shops));
+            localStorage.setItem(`shopalert_monitors_${currentUser.id}`, JSON.stringify(monitors));
+            localStorage.setItem(`shopalert_incidents_${currentUser.id}`, JSON.stringify(incidents));
+        }
+
+        // Initialize app
+        function init() {
+            renderStats();
+            renderShops();
+            renderMonitors();
+            renderIncidents();
+            renderProfile();
+            loadShopSelect();
+        }
+
+        // Show section
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            const navBtn = document.getElementById('nav-' + sectionId);
+            if (navBtn) navBtn.classList.add('active');
+            document.getElementById('user-dropdown').classList.remove('active');
+        }
+
+        // Modal functions
+        function openAddShopModal() {
+            document.getElementById('add-shop-modal').classList.add('active');
+        }
+
+        function openEditShopModal(id) {
+            const shop = shops.find(s => s.id === id);
+            if (!shop) return;
+
+            document.getElementById('edit-shop-id').value = shop.id;
+            document.getElementById('edit-shop-name').value = shop.name;
+            document.getElementById('edit-shop-url').value = shop.url;
+            document.getElementById('edit-shop-description').value = shop.description || '';
+            document.getElementById('edit-shop-modal').classList.add('active');
+        }
+
+        function openAddMonitorModal() {
+            if (shops.length === 0) {
+                alert('Nejprve přidejte e-shop!');
+                return;
+            }
+            loadShopSelect();
+            document.getElementById('add-monitor-modal').classList.add('active');
+        }
+
+        function openEditMonitorModal(id) {
+            const monitor = monitors.find(m => m.id === id);
+            if (!monitor) return;
+
+            loadShopSelect('edit-monitor-shop');
+            document.getElementById('edit-monitor-id').value = monitor.id;
+            document.getElementById('edit-monitor-shop').value = monitor.shopId;
+            document.getElementById('edit-monitor-url').value = monitor.url;
+            document.getElementById('edit-monitor-interval').value = monitor.interval;
+            document.getElementById('edit-monitor-modal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Shop functions
+        function addShop(event) {
+            event.preventDefault();
+            const shop = {
+                id: Date.now(),
+                name: document.getElementById('shop-name').value,
+                url: document.getElementById('shop-url').value,
+                description: document.getElementById('shop-description').value,
+                createdAt: new Date().toISOString()
+            };
+            shops.push(shop);
+            saveUserData();
+            closeModal('add-shop-modal');
+            event.target.reset();
+            init();
+        }
+
+        function updateShop(event) {
+            event.preventDefault();
+            const id = parseInt(document.getElementById('edit-shop-id').value);
+            const shop = shops.find(s => s.id === id);
+            if (!shop) return;
+
+            shop.name = document.getElementById('edit-shop-name').value;
+            shop.url = document.getElementById('edit-shop-url').value;
+            shop.description = document.getElementById('edit-shop-description').value;
+
+            saveUserData();
+            closeModal('edit-shop-modal');
+            init();
+        }
+
+        function deleteShop(id) {
+            if (!confirm('Opravdu chcete smazat tento e-shop? Budou smazány i všechny jeho monitory.')) return;
+            shops = shops.filter(s => s.id !== id);
+            monitors = monitors.filter(m => m.shopId !== id);
+            saveUserData();
+            init();
+        }
+
+        // Monitor functions
+        function addMonitor(event) {
+            event.preventDefault();
+            const monitor = {
+                id: Date.now(),
+                shopId: parseInt(document.getElementById('monitor-shop').value),
+                url: document.getElementById('monitor-url').value,
+                interval: parseInt(document.getElementById('monitor-interval').value),
+                status: 'unknown',
+                lastCheck: null,
+                createdAt: new Date().toISOString()
+            };
+            monitors.push(monitor);
+            saveUserData();
+            closeModal('add-monitor-modal');
+            event.target.reset();
+            init();
+        }
+
+        function updateMonitor(event) {
+            event.preventDefault();
+            const id = parseInt(document.getElementById('edit-monitor-id').value);
+            const monitor = monitors.find(m => m.id === id);
+            if (!monitor) return;
+
+            monitor.shopId = parseInt(document.getElementById('edit-monitor-shop').value);
+            monitor.url = document.getElementById('edit-monitor-url').value;
+            monitor.interval = parseInt(document.getElementById('edit-monitor-interval').value);
+
+            saveUserData();
+            closeModal('edit-monitor-modal');
+            init();
+        }
+
+        function deleteMonitor(id) {
+            if (!confirm('Opravdu chcete smazat tento monitor?')) return;
+            monitors = monitors.filter(m => m.id !== id);
+            saveUserData();
+            init();
+        }
+
+        function simulateCheck(monitorId) {
+            const monitor = monitors.find(m => m.id === monitorId);
+            if (!monitor) return;
+
+            const statuses = ['up', 'up', 'up', 'down'];
+            monitor.status = statuses[Math.floor(Math.random() * statuses.length)];
+            monitor.lastCheck = new Date().toISOString();
+            monitor.responseTime = Math.floor(Math.random() * 500) + 50;
+
+            if (monitor.status === 'down' && Math.random() > 0.5) {
+                const incident = {
+                    id: Date.now(),
+                    monitorId: monitor.id,
+                    status: 'ongoing',
+                    startedAt: new Date().toISOString(),
+                    errorMessage: 'HTTP 503 Service Unavailable'
+                };
+                incidents.push(incident);
+            }
+
+            saveUserData();
+            init();
+        }
+
+        // Render functions
+        function renderStats() {
+            document.getElementById('stat-shops').textContent = shops.length;
+            document.getElementById('stat-monitors').textContent = monitors.length;
+            const upMonitors = monitors.filter(m => m.status === 'up').length;
+            const uptime = monitors.length > 0 ? ((upMonitors / monitors.length) * 100).toFixed(1) : 100;
+            document.getElementById('stat-uptime').textContent = uptime + '%';
+        }
+
+        function renderShops() {
+            const container = document.getElementById('shops-list');
+            if (shops.length === 0) {
+                container.innerHTML = '<div class="empty-state">Zatím nemáte žádný e-shop. Přidejte svůj první e-shop kliknutím na tlačítko výše.</div>';
+                return;
+            }
+            container.innerHTML = shops.map(shop => {
+                const shopMonitors = monitors.filter(m => m.shopId === shop.id);
+                return `
+                    <div class="list-item">
+                        <div class="flex-1">
+                            <h3>${shop.name}</h3>
+                            <a href="${shop.url}" target="_blank">${shop.url}</a>
+                            ${shop.description ? `<p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">${shop.description}</p>` : ''}
+                            <div class="list-meta">
+                                <span>Monitorů: ${shopMonitors.length}</span>
+                                <span style="color: #059669;">● Online</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary btn-small" onclick="openEditShopModal(${shop.id})">Upravit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteShop(${shop.id})">Smazat</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderMonitors() {
+            const container = document.getElementById('monitors-list');
+            if (monitors.length === 0) {
+                container.innerHTML = '<div class="empty-state">Zatím nemáte žádný monitor. Nejprve přidejte e-shop, pak můžete vytvořit monitory.</div>';
+                return;
+            }
+            container.innerHTML = monitors.map(monitor => {
+                const shop = shops.find(s => s.id === monitor.shopId);
+                const statusIcon = monitor.status === 'up' ? '✓' : monitor.status === 'down' ? '✗' : '?';
+                const statusColor = monitor.status === 'up' ? 'green' : monitor.status === 'down' ? 'red' : 'yellow';
+                const badgeClass = monitor.status === 'up' ? 'green' : monitor.status === 'down' ? 'red' : 'yellow';
+                const lastCheck = monitor.lastCheck ? new Date(monitor.lastCheck).toLocaleString('cs-CZ') : 'Nikdy';
+                const intervalText = monitor.interval === 60000 ? '1 min' : monitor.interval === 300000 ? '5 min' : monitor.interval === 600000 ? '10 min' : '30 min';
+
+                return `
+                    <div class="list-item">
+                        <div class="flex items-center gap-3 flex-1">
+                            <span class="status-icon ${statusColor}">${statusIcon}</span>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3>${monitor.url}</h3>
+                                    <span class="badge ${badgeClass}">${monitor.status.toUpperCase()}</span>
+                                </div>
+                                <div class="list-meta">
+                                    <span>Shop: ${shop ? shop.name : 'Neznámý'}</span>
+                                    <span>Interval: ${intervalText}</span>
+                                    ${monitor.responseTime ? `<span>Odezva: ${monitor.responseTime}ms</span>` : ''}
+                                    <span>Poslední kontrola: ${lastCheck}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary btn-small" onclick="simulateCheck(${monitor.id})">Test</button>
+                            <button class="btn btn-secondary btn-small" onclick="openEditMonitorModal(${monitor.id})">Upravit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteMonitor(${monitor.id})">Smazat</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderIncidents() {
+            const container = document.getElementById('incidents-list');
+            if (incidents.length === 0) {
+                container.innerHTML = '<div class="empty-state">Zatím nejsou žádné incidenty. Skvělá práce!</div>';
+                return;
+            }
+            container.innerHTML = incidents.slice(-10).reverse().map(incident => {
+                const monitor = monitors.find(m => m.id === incident.monitorId);
+                const shop = monitor ? shops.find(s => s.id === monitor.shopId) : null;
+                const duration = incident.resolvedAt
+                    ? Math.round((new Date(incident.resolvedAt) - new Date(incident.startedAt)) / 1000 / 60) + 'm'
+                    : 'Probíhá';
+
+                return `
+                    <div class="list-item">
+                        <div class="flex gap-3 flex-1">
+                            <span style="font-size: 1.25rem; color: ${incident.status === 'ongoing' ? '#dc2626' : '#059669'};">${incident.status === 'ongoing' ? '⚠' : '✓'}</span>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3>${monitor ? monitor.url : 'Neznámý monitor'}</h3>
+                                    <span class="badge ${incident.status === 'ongoing' ? 'red' : 'green'}">${incident.status === 'ongoing' ? 'PROBÍHÁ' : 'VYŘEŠENO'}</span>
+                                </div>
+                                ${shop ? `<p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0;">Shop: ${shop.name}</p>` : ''}
+                                <p style="font-size: 0.875rem; color: #dc2626; margin: 0.5rem 0;">${incident.errorMessage}</p>
+                                <div class="list-meta">
+                                    <span><strong>Začátek:</strong> ${new Date(incident.startedAt).toLocaleString('cs-CZ')}</span>
+                                    <span><strong>Trvání:</strong> ${duration}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderProfile() {
+            const avatar = currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('profile-avatar').textContent = avatar;
+            document.getElementById('profile-name').textContent = currentUser.name;
+            document.getElementById('profile-email').textContent = currentUser.email;
+            document.getElementById('profile-since').textContent = new Date(currentUser.createdAt).toLocaleDateString('cs-CZ');
+            document.getElementById('profile-shops').textContent = shops.length;
+            document.getElementById('profile-monitors').textContent = monitors.length;
+        }
+
+        function loadShopSelect(selectId = 'monitor-shop') {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Vyberte e-shop</option>' +
+                shops.map(shop => `<option value="${shop.id}">${shop.name}</option>`).join('');
+        }
+
+        function exportIncidents() {
+            if (incidents.length === 0) {
+                alert('Nejsou žádné incidenty k exportu');
+                return;
+            }
+            const csv = 'ID,Monitor,Shop,Status,Chyba,Začátek,Konec\n' +
+                incidents.map(i => {
+                    const monitor = monitors.find(m => m.id === i.monitorId);
+                    const shop = monitor ? shops.find(s => s.id === monitor.shopId) : null;
+                    return `${i.id},"${monitor?.url || 'N/A'}","${shop?.name || 'N/A'}",${i.status},"${i.errorMessage}",${i.startedAt},${i.resolvedAt || ''}`;
+                }).join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'incidents.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Close user menu on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-menu')) {
+                document.getElementById('user-dropdown').classList.remove('active');
+            }
+        });
+
+        // Initialize
+        if (currentUser) {
+            showApp();
+        }
+    </script>
+</body>
+</html>
