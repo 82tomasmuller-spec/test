@@ -852,6 +852,32 @@
             init();
         }
 
+        function testMonitor(monitorId, event) {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            const originalBg = button.style.background;
+
+            // Show loading state
+            button.innerHTML = '⏳ Testuji...';
+            button.style.background = '#f59e0b';
+            button.disabled = true;
+
+            // Perform check
+            simulateCheck(monitorId);
+
+            // Restore button after 1 second
+            setTimeout(() => {
+                button.innerHTML = '✓ Hotovo';
+                button.style.background = '#059669';
+
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = originalBg;
+                    button.disabled = false;
+                }, 800);
+            }, 1000);
+        }
+
         function simulateCheck(monitorId) {
             const monitor = monitors.find(m => m.id === monitorId);
             if (!monitor) return;
@@ -1025,7 +1051,7 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button class="btn btn-secondary btn-small" onclick="simulateCheck(${monitor.id})">Test</button>
+                            <button class="btn btn-secondary btn-small" onclick="testMonitor(${monitor.id}, event)">Test</button>
                             <button class="btn btn-secondary btn-small" onclick="openEditMonitorModal(${monitor.id})">Upravit</button>
                             <button class="btn btn-danger btn-small" onclick="deleteMonitor(${monitor.id})">Smazat</button>
                         </div>
