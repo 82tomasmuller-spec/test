@@ -419,15 +419,19 @@
                 <button class="close-btn" onclick="closeModal('add-monitor-modal')">&times;</button>
             </div>
             <form onsubmit="addMonitor(event)">
+                <!-- Error message -->
+                <div id="add-monitor-error" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; font-size: 0.875rem;"></div>
+
                 <div class="form-group">
                     <label for="monitor-shop">E-shop *</label>
-                    <select id="monitor-shop" required>
+                    <select id="monitor-shop" required onchange="onShopChange()">
                         <option value="">Vyberte e-shop</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="monitor-url">URL k monitorování *</label>
                     <input type="url" id="monitor-url" required placeholder="https://example.com/checkout">
+                    <small style="color: #6b7280; font-size: 0.75rem; margin-top: 0.25rem; display: block;" id="monitor-url-hint"></small>
                 </div>
                 <div class="form-group">
                     <label for="monitor-interval">Interval kontroly</label>
@@ -751,6 +755,19 @@
                     errorDiv.textContent = '';
                 }
             }
+
+            // Clear error and hint when closing add monitor modal
+            if (modalId === 'add-monitor-modal') {
+                const errorDiv = document.getElementById('add-monitor-error');
+                const hintElement = document.getElementById('monitor-url-hint');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                    errorDiv.textContent = '';
+                }
+                if (hintElement) {
+                    hintElement.textContent = '';
+                }
+            }
         }
 
         function togglePasswordVisibility(inputId) {
@@ -809,12 +826,57 @@
         }
 
         // Monitor functions
+        function onShopChange() {
+            const shopId = parseInt(document.getElementById('monitor-shop').value);
+            const urlInput = document.getElementById('monitor-url');
+            const hintElement = document.getElementById('monitor-url-hint');
+            const errorDiv = document.getElementById('add-monitor-error');
+
+            // Hide error when shop changes
+            errorDiv.style.display = 'none';
+
+            if (shopId) {
+                const shop = shops.find(s => s.id === shopId);
+                if (shop) {
+                    // Auto-fill with shop URL
+                    urlInput.value = shop.url;
+                    hintElement.textContent = `💡 URL musí začínat: ${shop.url}`;
+                    hintElement.style.color = '#059669';
+                }
+            } else {
+                urlInput.value = '';
+                hintElement.textContent = '';
+            }
+        }
+
         function addMonitor(event) {
             event.preventDefault();
+            const shopId = parseInt(document.getElementById('monitor-shop').value);
+            const url = document.getElementById('monitor-url').value;
+            const errorDiv = document.getElementById('add-monitor-error');
+
+            // Hide previous errors
+            errorDiv.style.display = 'none';
+
+            // Validate: shop must be selected
+            if (!shopId) {
+                errorDiv.textContent = '❌ Musíte vybrat e-shop ze seznamu!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Validate: URL must start with shop root URL
+            const shop = shops.find(s => s.id === shopId);
+            if (shop && !url.startsWith(shop.url)) {
+                errorDiv.textContent = `❌ URL musí začínat adresou e-shopu: ${shop.url}`;
+                errorDiv.style.display = 'block';
+                return;
+            }
+
             const monitor = {
                 id: Date.now(),
-                shopId: parseInt(document.getElementById('monitor-shop').value),
-                url: document.getElementById('monitor-url').value,
+                shopId: shopId,
+                url: url,
                 interval: parseInt(document.getElementById('monitor-interval').value),
                 status: 'unknown',
                 lastCheck: null,
@@ -824,6 +886,7 @@
             saveUserData();
             closeModal('add-monitor-modal');
             event.target.reset();
+            document.getElementById('monitor-url-hint').textContent = ''; // Clear hint
             init();
             startMonitoring(monitor); // Start automatic monitoring immediately
         }
