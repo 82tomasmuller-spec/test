@@ -823,12 +823,15 @@
             const monitor = monitors.find(m => m.id === monitorId);
             if (!monitor) return;
 
-            const statuses = ['up', 'up', 'up', 'down'];
-            monitor.status = statuses[Math.floor(Math.random() * statuses.length)];
+            // Realistic simulation: 98% uptime (very rare downtime)
+            const isUp = Math.random() < 0.98;
+            monitor.status = isUp ? 'up' : 'down';
             monitor.lastCheck = new Date().toISOString();
-            monitor.responseTime = Math.floor(Math.random() * 500) + 50;
+            monitor.responseTime = isUp ? Math.floor(Math.random() * 300) + 50 : Math.floor(Math.random() * 2000) + 1000;
 
-            if (monitor.status === 'down' && Math.random() > 0.5) {
+            // Create incident only if down AND random chance (rare)
+            // This prevents too many false incidents
+            if (monitor.status === 'down' && Math.random() > 0.85) {
                 const incident = {
                     id: Date.now(),
                     monitorId: monitor.id,
@@ -837,6 +840,16 @@
                     errorMessage: 'HTTP 503 Service Unavailable'
                 };
                 incidents.push(incident);
+            }
+
+            // Auto-resolve old incidents if monitor is up
+            if (monitor.status === 'up') {
+                incidents.forEach(incident => {
+                    if (incident.monitorId === monitor.id && incident.status === 'ongoing') {
+                        incident.status = 'resolved';
+                        incident.resolvedAt = new Date().toISOString();
+                    }
+                });
             }
 
             saveUserData();
