@@ -72,7 +72,7 @@
         .empty-state { text-align: center; padding: 3rem; color: #6b7280; }
 
         /* Shop Groups (Accordion) */
-        .shop-group { margin-bottom: 1rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .shop-group { margin-bottom: 2rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
         .shop-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: #f9fafb; cursor: pointer; border-bottom: 1px solid #e5e7eb; transition: background 0.2s; }
         .shop-header:hover { background: #f3f4f6; }
         .shop-header h3 { font-size: 1.125rem; font-weight: 600; color: #111827; margin: 0; }
@@ -445,13 +445,16 @@
                     <small style="color: #6b7280; font-size: 0.75rem; margin-top: 0.25rem; display: block;" id="monitor-url-hint"></small>
                 </div>
                 <div class="form-group">
-                    <label for="monitor-interval">Interval kontroly</label>
-                    <select id="monitor-interval">
-                        <option value="60000">1 minuta</option>
-                        <option value="300000" selected>5 minut</option>
-                        <option value="600000">10 minut</option>
-                        <option value="1800000">30 minut</option>
-                    </select>
+                    <label for="monitor-interval">Interval kontroly: <strong id="monitor-interval-label">5 minut</strong></label>
+                    <input type="range" id="monitor-interval" min="0" max="5" value="2" step="1" oninput="updateIntervalLabel('monitor-interval-label', this.value)" style="width: 100%; cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
+                        <span>30s</span>
+                        <span>1m</span>
+                        <span>5m</span>
+                        <span>10m</span>
+                        <span>30m</span>
+                        <span>1h</span>
+                    </div>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('add-monitor-modal')">Zrušit</button>
@@ -481,13 +484,16 @@
                     <input type="url" id="edit-monitor-url" required>
                 </div>
                 <div class="form-group">
-                    <label for="edit-monitor-interval">Interval kontroly</label>
-                    <select id="edit-monitor-interval">
-                        <option value="60000">1 minuta</option>
-                        <option value="300000">5 minut</option>
-                        <option value="600000">10 minut</option>
-                        <option value="1800000">30 minut</option>
-                    </select>
+                    <label for="edit-monitor-interval">Interval kontroly: <strong id="edit-monitor-interval-label">5 minut</strong></label>
+                    <input type="range" id="edit-monitor-interval" min="0" max="5" value="2" step="1" oninput="updateIntervalLabel('edit-monitor-interval-label', this.value)" style="width: 100%; cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
+                        <span>30s</span>
+                        <span>1m</span>
+                        <span>5m</span>
+                        <span>10m</span>
+                        <span>30m</span>
+                        <span>1h</span>
+                    </div>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('edit-monitor-modal')">Zrušit</button>
@@ -747,7 +753,11 @@
             document.getElementById('edit-monitor-id').value = monitor.id;
             document.getElementById('edit-monitor-shop').value = monitor.shopId;
             document.getElementById('edit-monitor-url').value = monitor.url;
-            document.getElementById('edit-monitor-interval').value = monitor.interval;
+
+            const sliderValue = getSliderFromInterval(monitor.interval);
+            document.getElementById('edit-monitor-interval').value = sliderValue;
+            updateIntervalLabel('edit-monitor-interval-label', sliderValue);
+
             document.getElementById('edit-monitor-modal').classList.add('active');
         }
 
@@ -794,6 +804,21 @@
                 button.textContent = '👁️'; // Show icon
                 button.title = 'Zobrazit heslo';
             }
+        }
+
+        function updateIntervalLabel(labelId, sliderValue) {
+            const labels = ['30 sekund', '1 minuta', '5 minut', '10 minut', '30 minut', '1 hodina'];
+            document.getElementById(labelId).textContent = labels[parseInt(sliderValue)];
+        }
+
+        function getIntervalFromSlider(sliderValue) {
+            const intervals = [30000, 60000, 300000, 600000, 1800000, 3600000];
+            return intervals[parseInt(sliderValue)];
+        }
+
+        function getSliderFromInterval(intervalMs) {
+            const intervals = [30000, 60000, 300000, 600000, 1800000, 3600000];
+            return intervals.indexOf(intervalMs);
         }
 
         // Shop functions
@@ -888,7 +913,7 @@
                 id: Date.now(),
                 shopId: shopId,
                 url: url,
-                interval: parseInt(document.getElementById('monitor-interval').value),
+                interval: getIntervalFromSlider(document.getElementById('monitor-interval').value),
                 status: 'unknown',
                 lastCheck: null,
                 createdAt: new Date().toISOString()
@@ -910,7 +935,7 @@
 
             monitor.shopId = parseInt(document.getElementById('edit-monitor-shop').value);
             monitor.url = document.getElementById('edit-monitor-url').value;
-            monitor.interval = parseInt(document.getElementById('edit-monitor-interval').value);
+            monitor.interval = getIntervalFromSlider(document.getElementById('edit-monitor-interval').value);
 
             saveUserData();
             closeModal('edit-monitor-modal');
