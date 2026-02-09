@@ -491,10 +491,6 @@
             </div>
             <form onsubmit="changePassword(event)">
                 <div class="form-group">
-                    <label for="current-password">Současné heslo *</label>
-                    <input type="password" id="current-password" required>
-                </div>
-                <div class="form-group">
                     <label for="new-password">Nové heslo *</label>
                     <input type="password" id="new-password" required minlength="6">
                 </div>
@@ -519,12 +515,16 @@
             </div>
             <form onsubmit="updateBilling(event)">
                 <div class="form-group">
-                    <label for="billing-company-input">Firma / Jméno a příjmení *</label>
-                    <input type="text" id="billing-company-input" required placeholder="např. Firma s.r.o. nebo Jan Novák">
+                    <label for="billing-ico-input">IČO</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="billing-ico-input" placeholder="12345678" style="flex: 1;">
+                        <button type="button" class="btn btn-primary" onclick="loadFromARES()" style="white-space: nowrap;">📋 Načíst z ARES</button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 0.75rem;">Zadejte IČO a klikněte na tlačítko pro automatické načtení údajů</small>
                 </div>
                 <div class="form-group">
-                    <label for="billing-ico-input">IČO</label>
-                    <input type="text" id="billing-ico-input" placeholder="12345678">
+                    <label for="billing-company-input">Firma / Jméno a příjmení *</label>
+                    <input type="text" id="billing-company-input" required placeholder="např. Firma s.r.o. nebo Jan Novák">
                 </div>
                 <div class="form-group">
                     <label for="billing-dic-input">DIČ</label>
@@ -1033,14 +1033,8 @@
 
         function changePassword(event) {
             event.preventDefault();
-            const currentPassword = document.getElementById('current-password').value;
             const newPassword = document.getElementById('new-password').value;
             const confirmPassword = document.getElementById('confirm-new-password').value;
-
-            if (currentUser.password !== currentPassword) {
-                alert('Současné heslo není správné!');
-                return;
-            }
 
             if (newPassword !== confirmPassword) {
                 alert('Nová hesla se neshodují!');
@@ -1096,6 +1090,99 @@
             alert('Fakturační údaje byly úspěšně uloženy!');
             closeModal('billing-modal');
             renderProfile();
+        }
+
+        async function loadFromARES() {
+            const ico = document.getElementById('billing-ico-input').value.trim().replace(/\s/g, '');
+
+            if (!ico) {
+                alert('Nejprve zadejte IČO');
+                return;
+            }
+
+            if (ico.length !== 8 || !/^\d+$/.test(ico)) {
+                alert('IČO musí obsahovat 8 číslic');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '⏳ Načítám...';
+                button.disabled = true;
+
+                // Call ARES API
+                const response = await fetch(`https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/${ico}`);
+
+                if (!response.ok) {
+                    throw new Error('IČO nenalezeno v ARES');
+                }
+
+                const data = await response.json();
+
+                // Extract data
+                const obchodniJmeno = data.obchodniJmeno || data.nazevObchodnihoRegistru || '';
+                const sidlo = data.sidlo || {};
+                const dic = data.dic || '';
+
+                // Fill form
+                document.getElementById('billing-company-input').value = obchodniJmeno;
+
+                if (dic) {
+                    document.getElementById('billing-dic-input').value = dic.startsWith('CZ') ? dic : `CZ${dic}`;
+                }
+
+                // Address
+                if (sidlo.textovaAdresa) {
+                    // Parse textová adresa
+                    const adresaParts = sidlo.textovaAdresa.split(',').map(s => s.trim());
+                    if (adresaParts.length >= 2) {
+                        document.getElementById('billing-address-input').value = adresaParts[0];
+
+                        // Extract PSČ and město
+                        const mestoPsc = adresaParts[adresaParts.length - 1];
+                        const pscMatch = mestoPsc.match(/(\d{3}\s?\d{2})/);
+                        const mesto = mestoPsc.replace(/\d{3}\s?\d{2}/, '').trim();
+
+                        if (pscMatch) {
+                            document.getElementById('billing-zip-input').value = pscMatch[1];
+                        }
+                        if (mesto) {
+                            document.getElementById('billing-city-input').value = mesto;
+                        }
+                    }
+                } else if (sidlo.nazevUlice || sidlo.nazevObce) {
+                    // Structured address
+                    const ulice = sidlo.nazevUlice || '';
+                    const cisloDomovni = sidlo.cisloDomovni || '';
+                    const cisloOrientacni = sidlo.cisloOrientacni || '';
+
+                    let adresa = ulice;
+                    if (cisloDomovni) adresa += ` ${cisloDomovni}`;
+                    if (cisloOrientacni) adresa += `/${cisloOrientacni}`;
+
+                    document.getElementById('billing-address-input').value = adresa.trim();
+                    document.getElementById('billing-city-input').value = sidlo.nazevObce || '';
+                    document.getElementById('billing-zip-input').value = sidlo.psc ? sidlo.psc.replace(/(\d{3})(\d{2})/, '$1 $2') : '';
+                }
+
+                document.getElementById('billing-country-input').value = 'Česká republika';
+
+                alert('✓ Údaje byly úspěšně načteny z ARES');
+
+                // Restore button
+                button.innerHTML = originalText;
+                button.disabled = false;
+
+            } catch (error) {
+                alert(`Chyba při načítání z ARES: ${error.message}\n\nZkontrolujte IČO a zkuste to znovu.`);
+
+                // Restore button
+                const button = event.target;
+                button.innerHTML = '📋 Načíst z ARES';
+                button.disabled = false;
+            }
         }
 
         function loadShopSelect(selectId = 'monitor-shop') {
