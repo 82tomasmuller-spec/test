@@ -40,8 +40,8 @@ export interface CartItem {
   imageUrl: string | null;
 }
 
-function getCartStorageKey(clubId: string) {
-  return `sport-cart-${clubId}`;
+function getCartStorageKey(clubSlug: string) {
+  return `sport-cart-${clubSlug}`;
 }
 
 function formatPrice(price: number): string {
@@ -60,22 +60,22 @@ export default function StorefrontClient({ club }: { club: ClubData }) {
   // Load cart from localStorage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(getCartStorageKey(club.id));
+      const stored = localStorage.getItem(getCartStorageKey(club.slug));
       if (stored) {
         setCart(JSON.parse(stored));
       }
     } catch {
       // ignore parse errors
     }
-  }, [club.id]);
+  }, [club.slug]);
 
   // Persist cart to localStorage
   const persistCart = useCallback(
     (items: CartItem[]) => {
       setCart(items);
-      localStorage.setItem(getCartStorageKey(club.id), JSON.stringify(items));
+      localStorage.setItem(getCartStorageKey(club.slug), JSON.stringify(items));
     },
-    [club.id]
+    [club.slug]
   );
 
   const addToCart = (product: Product) => {

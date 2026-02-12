@@ -48,26 +48,27 @@ export default function CheckoutPage() {
 
   // Load cart and club info
   useEffect(() => {
-    async function loadData() {
+    // Read cart from localStorage immediately using slug
+    const storageKey = `sport-cart-${slug}`;
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) {
+      router.push(`/klub/${slug}`);
+      return;
+    }
+    const items = JSON.parse(stored) as CartItem[];
+    if (items.length === 0) {
+      router.push(`/klub/${slug}`);
+      return;
+    }
+    setCart(items);
+
+    // Fetch club info for categories
+    async function loadClubInfo() {
       try {
-        // Fetch club info for categories
         const res = await fetch(`/api/clubs/by-slug/${slug}`);
         if (!res.ok) throw new Error("Nepodařilo se načíst informace o klubu");
         const data = await res.json();
         setClubInfo(data.club);
-
-        // Load cart from localStorage
-        const storageKey = `sport-cart-${data.club.id}`;
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-          const items = JSON.parse(stored) as CartItem[];
-          setCart(items);
-          if (items.length === 0) {
-            router.push(`/klub/${slug}`);
-          }
-        } else {
-          router.push(`/klub/${slug}`);
-        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Nastala neočekávaná chyba"
@@ -76,7 +77,7 @@ export default function CheckoutPage() {
         setLoading(false);
       }
     }
-    loadData();
+    loadClubInfo();
   }, [slug, router]);
 
   const totalPrice = cart.reduce(
@@ -121,7 +122,7 @@ export default function CheckoutPage() {
       const order = await res.json();
 
       // Clear cart
-      localStorage.removeItem(`sport-cart-${clubInfo.id}`);
+      localStorage.removeItem(`sport-cart-${slug}`);
 
       // Redirect to confirmation
       router.push(`/klub/${slug}/potvrzeni/${order.orderNumber}`);
