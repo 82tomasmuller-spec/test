@@ -53,7 +53,7 @@ export default function AdminNastaveniPage() {
     if (!selectedClub) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/clubs/${selectedClub.slug}/settings`, {
+      const res = await fetch(`/api/clubs/by-slug/${selectedClub.slug}/settings`, {
         credentials: "include",
       });
       if (res.ok) {
@@ -88,7 +88,7 @@ export default function AdminNastaveniPage() {
     setSaveSuccess(false);
 
     try {
-      const res = await fetch(`/api/clubs/${selectedClub.slug}/settings`, {
+      const res = await fetch(`/api/clubs/by-slug/${selectedClub.slug}/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -129,7 +129,7 @@ export default function AdminNastaveniPage() {
     setInviteSuccess(false);
 
     try {
-      const res = await fetch(`/api/clubs/${selectedClub.slug}/settings/invite`, {
+      const res = await fetch(`/api/clubs/by-slug/${selectedClub.slug}/settings/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -157,7 +157,7 @@ export default function AdminNastaveniPage() {
   async function handleRemoveMember(membershipId: string) {
     if (!selectedClub) return;
     try {
-      await fetch(`/api/clubs/${selectedClub.slug}/settings/members/${membershipId}`, {
+      await fetch(`/api/clubs/by-slug/${selectedClub.slug}/settings/members/${membershipId}`, {
         method: "DELETE",
         credentials: "include",
       });
