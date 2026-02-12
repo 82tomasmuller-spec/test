@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Category {
   id: string;
@@ -48,6 +49,7 @@ function formatPrice(price: number): string {
 }
 
 export default function StorefrontClient({ club }: { club: ClubData }) {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -518,13 +520,15 @@ export default function StorefrontClient({ club }: { club: ClubData }) {
                     {formatPrice(totalPrice)}
                   </span>
                 </div>
-                <Link
-                  href={`/klub/${club.slug}/pokladna`}
-                  onClick={() => setCartOpen(false)}
+                <button
+                  onClick={() => {
+                    setCartOpen(false);
+                    router.push(`/klub/${club.slug}/pokladna`);
+                  }}
                   className="block w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-blue-700"
                 >
                   Pokračovat k objednávce
-                </Link>
+                </button>
               </div>
             )}
           </div>
