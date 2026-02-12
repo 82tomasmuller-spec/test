@@ -53,11 +53,11 @@ export default function CheckoutPage() {
         // Fetch club info for categories
         const res = await fetch(`/api/clubs/by-slug/${slug}`);
         if (!res.ok) throw new Error("Nepodařilo se načíst informace o klubu");
-        const club = await res.json();
-        setClubInfo(club);
+        const data = await res.json();
+        setClubInfo(data.club);
 
         // Load cart from localStorage
-        const storageKey = `sport-cart-${club.id}`;
+        const storageKey = `sport-cart-${data.club.id}`;
         const stored = localStorage.getItem(storageKey);
         if (stored) {
           const items = JSON.parse(stored) as CartItem[];
