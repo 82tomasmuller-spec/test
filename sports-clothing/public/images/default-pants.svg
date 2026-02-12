@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="12" fill="#FEF3C7"/>
+  <path d="M65 45 L135 45 L135 65 L125 165 L108 165 L100 95 L92 165 L75 165 L65 65 Z" stroke="#F59E0B" stroke-width="3" fill="#FDE68A"/>
+  <line x1="65" y1="45" x2="135" y2="45" stroke="#F59E0B" stroke-width="4"/>
+  <text x="100" y="185" text-anchor="middle" fill="#F59E0B" font-family="Arial" font-size="12">Tepláky</text>
+</svg>

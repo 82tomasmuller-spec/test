@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="12" fill="#EFF6FF"/>
+  <path d="M60 60 L80 45 L100 55 L120 45 L140 60 L155 75 L140 85 L140 150 L60 150 L60 85 L45 75 Z" stroke="#3B82F6" stroke-width="3" fill="#BFDBFE"/>
+  <path d="M80 45 Q100 65 120 45" stroke="#3B82F6" stroke-width="2" fill="none"/>
+  <text x="100" y="185" text-anchor="middle" fill="#3B82F6" font-family="Arial" font-size="12">Tričko</text>
+</svg>

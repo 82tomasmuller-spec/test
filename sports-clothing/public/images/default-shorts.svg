@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="12" fill="#F0FDF4"/>
+  <path d="M60 60 L140 60 L140 80 L130 140 L110 140 L100 100 L90 140 L70 140 L60 80 Z" stroke="#22C55E" stroke-width="3" fill="#BBF7D0"/>
+  <line x1="60" y1="60" x2="140" y2="60" stroke="#22C55E" stroke-width="4"/>
+  <text x="100" y="185" text-anchor="middle" fill="#22C55E" font-family="Arial" font-size="12">Kraťasy</text>
+</svg>

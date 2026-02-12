@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  password     String
+  name         String
+  isSuperAdmin Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  memberships  ClubMembership[]
+}
+
+model Club {
+  id              String           @id @default(uuid())
+  name            String
+  slug            String           @unique
+  logoUrl         String?
+  isActive        Boolean          @default(false)
+  ordersOpen      Boolean          @default(true)
+  contactEmail    String
+  contactPhone    String?
+  ico             String?
+  address         String?
+  invoiceNote     String?
+  activationFee   Float            @default(500)
+  createdAt       DateTime         @default(now())
+  categories      Category[]
+  products        Product[]
+  orders          Order[]
+  memberships     ClubMembership[]
+  invoices        Invoice[]
+}
+
+model ClubMembership {
+  id     String @id @default(uuid())
+  userId String
+  clubId String
+  role   String @default("ADMIN")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubId])
+}
+
+model Category {
+  id       String  @id @default(uuid())
+  clubId   String
+  name     String
+  imageUrl String?
+  sortOrder Int    @default(0)
+  club     Club    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  orders   Order[]
+
+  @@unique([clubId, name])
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  clubId      String
+  name        String
+  description String?
+  price       Float
+  sizes       String      // JSON array: ["XS","M","L","XL"]
+  imageUrl    String?
+  active      Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  club        Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  clubId      String
+  orderNumber String      @unique
+  createdAt   DateTime    @default(now())
+  status      String      @default("ORDERED")
+  parentName  String
+  parentEmail String
+  parentPhone String
+  categoryId  String
+  totalAmount Float
+  club        Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  category    Category    @relation(fields: [categoryId], references: [id])
+  items       OrderItem[]
+  statusLog   StatusLog[]
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  size      String
+  quantity  Int
+  unitPrice Float
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model StatusLog {
+  id        String   @id @default(uuid())
+  orderId   String
+  oldStatus String?
+  newStatus String
+  changedAt DateTime @default(now())
+  note      String?
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  clubId        String
+  invoiceNumber String   @unique
+  amount        Float
+  variableSymbol String
+  status        String   @default("UNPAID") // UNPAID, PAID
+  issuedAt      DateTime @default(now())
+  paidAt        DateTime?
+  club          Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+}
