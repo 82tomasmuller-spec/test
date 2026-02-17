@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  ::selection {
+    @apply bg-primary-100 text-primary-900;
+  }
+}
+
+@layer components {
+  /* Article content styles */
+  .prose-article h2 {
+    @apply text-2xl font-bold mt-8 mb-4 text-gray-900;
+  }
+
+  .prose-article h3 {
+    @apply text-xl font-semibold mt-6 mb-3 text-gray-800;
+  }
+
+  .prose-article p {
+    @apply mb-4 leading-relaxed text-gray-700;
+  }
+
+  .prose-article ul, .prose-article ol {
+    @apply mb-4 pl-6;
+  }
+
+  .prose-article ul {
+    @apply list-disc;
+  }
+
+  .prose-article ol {
+    @apply list-decimal;
+  }
+
+  .prose-article li {
+    @apply mb-2 text-gray-700;
+  }
+
+  .prose-article a {
+    @apply text-primary-600 hover:text-primary-800 underline;
+  }
+
+  .prose-article img {
+    @apply rounded-lg my-6 max-w-full h-auto;
+  }
+
+  .prose-article blockquote {
+    @apply border-l-4 border-primary-500 pl-4 italic my-4 text-gray-600;
+  }
+
+  .prose-article pre {
+    @apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto my-4;
+  }
+
+  .prose-article code {
+    @apply bg-gray-100 text-primary-700 px-1.5 py-0.5 rounded text-sm;
+  }
+
+  .prose-article pre code {
+    @apply bg-transparent text-gray-100 p-0;
+  }
+
+  .prose-article table {
+    @apply w-full border-collapse my-4;
+  }
+
+  .prose-article th {
+    @apply bg-gray-100 border border-gray-200 px-4 py-2 text-left font-semibold;
+  }
+
+  .prose-article td {
+    @apply border border-gray-200 px-4 py-2;
+  }
+
+  /* CTA Box */
+  .cta-box {
+    @apply bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200 rounded-xl p-6 my-8;
+  }
+
+  /* FAQ Accordion */
+  .faq-item summary {
+    @apply cursor-pointer font-semibold text-gray-800 py-3 hover:text-primary-600 transition-colors;
+  }
+
+  .faq-item[open] summary {
+    @apply text-primary-600;
+  }
+
+  /* Admin sidebar */
+  .admin-sidebar-link {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors;
+  }
+
+  .admin-sidebar-link.active {
+    @apply bg-primary-50 text-primary-700 font-medium;
+  }
+
+  /* TipTap editor */
+  .tiptap-editor .ProseMirror {
+    @apply min-h-[400px] outline-none p-4;
+  }
+
+  .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+    @apply text-gray-400 float-left h-0 pointer-events-none;
+    content: attr(data-placeholder);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
