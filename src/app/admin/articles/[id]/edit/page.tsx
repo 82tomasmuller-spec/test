@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import ArticleEditor from '@/components/admin/ArticleEditor';
+import type { ArticleStatus } from '@/types';
 
 interface PageProps {
   params: { id: string };
@@ -27,7 +28,7 @@ export default async function EditArticlePage({ params }: PageProps) {
     slug: article.slug,
     content: article.content,
     excerpt: article.excerpt || '',
-    status: article.status,
+    status: article.status as ArticleStatus,
     categoryId: article.categoryId || '',
     metaTitle: article.metaTitle || '',
     metaDescription: article.metaDescription || '',
