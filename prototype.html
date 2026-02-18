@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Blog CMS - Prototyp</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:#f8fafc; color:#1e293b; overflow-x:hidden; }
+
+/* Navigation between screens */
+.screen { display:none; min-height:100vh; }
+.screen.active { display:block; }
+
+/* Screen switcher - fixed bottom nav */
+.switcher { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e2e8f0; display:flex; z-index:1000; padding-bottom:env(safe-area-inset-bottom); }
+.switcher button { flex:1; padding:8px 4px; border:none; background:none; font-size:10px; color:#94a3b8; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; }
+.switcher button.active { color:#6366f1; }
+.switcher button svg { width:20px; height:20px; }
+
+/* ===== PUBLIC SITE ===== */
+.pub-header { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; padding:16px 20px; }
+.pub-header h1 { font-size:20px; font-weight:800; }
+.pub-header p { font-size:12px; opacity:0.8; margin-top:2px; }
+
+.pub-nav { display:flex; gap:8px; padding:12px 20px; background:#fff; border-bottom:1px solid #e2e8f0; overflow-x:auto; }
+.pub-nav span { padding:6px 14px; border-radius:20px; font-size:13px; font-weight:500; white-space:nowrap; cursor:pointer; background:#f1f5f9; color:#64748b; }
+.pub-nav span.active { background:#6366f1; color:#fff; }
+
+.hero-card { margin:16px 20px; background:linear-gradient(135deg,#312e81,#4f46e5); border-radius:16px; padding:24px; color:#fff; }
+.hero-card .badge { display:inline-block; background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; font-size:11px; font-weight:500; margin-bottom:12px; }
+.hero-card h2 { font-size:20px; font-weight:700; line-height:1.3; margin-bottom:8px; }
+.hero-card p { font-size:13px; opacity:0.85; line-height:1.5; margin-bottom:16px; }
+.hero-card .meta { display:flex; align-items:center; gap:8px; font-size:12px; opacity:0.7; }
+
+.article-card { background:#fff; margin:0 20px 12px; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+.article-card .cat { font-size:11px; font-weight:600; color:#6366f1; text-transform:uppercase; letter-spacing:0.5px; }
+.article-card h3 { font-size:15px; font-weight:600; margin:6px 0; line-height:1.4; }
+.article-card p { font-size:13px; color:#64748b; line-height:1.5; }
+.article-card .foot { display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:12px; color:#94a3b8; }
+
+.section-title { padding:20px 20px 12px; font-size:16px; font-weight:700; }
+
+/* ===== ARTICLE DETAIL ===== */
+.art-header { position:relative; background:linear-gradient(135deg,#1e1b4b,#3730a3); padding:60px 20px 24px; color:#fff; }
+.art-header .back { position:absolute; top:16px; left:16px; background:rgba(255,255,255,0.2); border:none; color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; }
+.art-header .cat-badge { display:inline-block; background:rgba(99,102,241,0.5); padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; margin-bottom:10px; }
+.art-header h1 { font-size:22px; font-weight:800; line-height:1.3; margin-bottom:12px; }
+.art-header .meta-row { display:flex; gap:16px; font-size:12px; opacity:0.7; }
+
+.art-body { padding:20px; padding-bottom:100px; }
+.art-body p { font-size:15px; line-height:1.8; color:#374151; margin-bottom:16px; }
+.art-body h2 { font-size:18px; font-weight:700; margin:24px 0 12px; color:#1e293b; }
+.art-body blockquote { border-left:3px solid #6366f1; padding:12px 16px; background:#f5f3ff; border-radius:0 8px 8px 0; margin:16px 0; font-style:italic; color:#4338ca; }
+.art-body code { background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:13px; }
+
+/* ===== LOGIN ===== */
+.login-screen { min-height:100vh; background:linear-gradient(135deg,#1e1b4b,#312e81); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+.login-box { background:#fff; border-radius:20px; padding:32px 24px; width:100%; max-width:380px; }
+.login-box .logo { text-align:center; margin-bottom:24px; }
+.login-box .logo span { font-size:28px; font-weight:800; background:linear-gradient(135deg,#6366f1,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.login-box .logo p { font-size:13px; color:#94a3b8; margin-top:4px; }
+.login-box label { display:block; font-size:13px; font-weight:500; color:#374151; margin-bottom:6px; margin-top:16px; }
+.login-box input { width:100%; padding:12px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; transition:border 0.2s; }
+.login-box input:focus { border-color:#6366f1; }
+.login-box .btn { width:100%; padding:13px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:600; margin-top:20px; cursor:pointer; }
+.login-box .forgot { text-align:center; margin-top:16px; font-size:13px; color:#6366f1; }
+
+/* ===== ADMIN DASHBOARD ===== */
+.admin-header { background:#fff; padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; }
+.admin-header h1 { font-size:18px; font-weight:700; }
+.admin-header .avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#a78bfa); display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700; }
+
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:16px 20px; }
+.stat-card { background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+.stat-card .label { font-size:12px; color:#94a3b8; font-weight:500; }
+.stat-card .value { font-size:24px; font-weight:800; margin:4px 0; }
+.stat-card .change { font-size:11px; font-weight:600; }
+.stat-card .change.up { color:#10b981; }
+.stat-card .change.down { color:#ef4444; }
+
+.quick-actions { padding:0 20px 12px; }
+.quick-actions h3 { font-size:14px; font-weight:600; margin-bottom:10px; color:#64748b; }
+.qa-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.qa-btn { padding:14px; border-radius:12px; border:1.5px solid #e2e8f0; background:#fff; text-align:center; cursor:pointer; }
+.qa-btn .icon { font-size:24px; margin-bottom:4px; }
+.qa-btn .text { font-size:12px; font-weight:500; color:#374151; }
+
+.recent-section { padding:16px 20px; }
+.recent-section h3 { font-size:14px; font-weight:600; margin-bottom:10px; color:#64748b; }
+.recent-item { display:flex; justify-content:space-between; align-items:center; padding:12px; background:#fff; border-radius:10px; margin-bottom:8px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+.recent-item .info h4 { font-size:14px; font-weight:600; }
+.recent-item .info p { font-size:12px; color:#94a3b8; margin-top:2px; }
+.recent-item .status { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.status-pub { background:#d1fae5; color:#059669; }
+.status-draft { background:#fef3c7; color:#d97706; }
+.status-sched { background:#dbeafe; color:#2563eb; }
+
+/* ===== AI GENERATOR ===== */
+.ai-header { background:linear-gradient(135deg,#6366f1,#8b5cf6); padding:20px; color:#fff; }
+.ai-header h2 { font-size:18px; font-weight:700; }
+.ai-header p { font-size:13px; opacity:0.8; margin-top:4px; }
+
+.ai-form { padding:20px; }
+.ai-form .field { margin-bottom:16px; }
+.ai-form .field label { display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
+.ai-form .field input, .ai-form .field textarea, .ai-form .field select {
+  width:100%; padding:12px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; font-family:inherit; outline:none; background:#fff;
+}
+.ai-form .field textarea { min-height:80px; resize:vertical; }
+.ai-form .chip-row { display:flex; flex-wrap:wrap; gap:8px; }
+.ai-form .chip { padding:8px 14px; border-radius:20px; border:1.5px solid #e2e8f0; font-size:13px; cursor:pointer; background:#fff; }
+.ai-form .chip.selected { background:#6366f1; color:#fff; border-color:#6366f1; }
+
+.gen-btn { width:calc(100% - 40px); margin:0 20px 20px; padding:14px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+
+/* ===== CONTENT PLANNER (Calendar) ===== */
+.cal-header { background:#fff; padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; }
+.cal-header h2 { font-size:18px; font-weight:700; }
+.cal-month { text-align:center; padding:16px 20px 8px; font-size:16px; font-weight:700; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; padding:8px 20px; }
+.cal-day-label { text-align:center; font-size:11px; color:#94a3b8; font-weight:600; padding:8px 0; }
+.cal-day { text-align:center; padding:10px 0; font-size:13px; border-radius:8px; cursor:pointer; position:relative; }
+.cal-day.today { background:#6366f1; color:#fff; font-weight:700; }
+.cal-day.has-post::after { content:''; position:absolute; bottom:4px; left:50%; transform:translateX(-50%); width:5px; height:5px; border-radius:50%; background:#6366f1; }
+.cal-day.today.has-post::after { background:#fff; }
+.cal-day.other { color:#cbd5e1; }
+
+.sched-list { padding:16px 20px; padding-bottom:100px; }
+.sched-list h3 { font-size:14px; font-weight:600; color:#64748b; margin-bottom:10px; }
+.sched-item { background:#fff; border-radius:12px; padding:14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border-left:3px solid #6366f1; }
+.sched-item h4 { font-size:14px; font-weight:600; }
+.sched-item .time { font-size:12px; color:#6366f1; font-weight:500; margin-top:2px; }
+.sched-item .desc { font-size:13px; color:#64748b; margin-top:6px; }
+
+/* ===== EDITOR ===== */
+.editor-toolbar { display:flex; gap:4px; padding:12px 20px; background:#fff; border-bottom:1px solid #e2e8f0; overflow-x:auto; }
+.editor-toolbar button { padding:8px 10px; border:1px solid #e2e8f0; border-radius:6px; background:#fff; font-size:13px; cursor:pointer; white-space:nowrap; }
+.editor-toolbar button:hover { background:#f1f5f9; }
+
+.editor-area { padding:20px; padding-bottom:100px; }
+.editor-area .title-input { width:100%; border:none; font-size:22px; font-weight:800; outline:none; margin-bottom:16px; color:#1e293b; }
+.editor-area .content-area { width:100%; min-height:300px; border:none; font-size:15px; line-height:1.8; outline:none; color:#374151; resize:none; }
+
+.editor-bottom { position:fixed; bottom:60px; left:0; right:0; padding:12px 20px; background:#fff; border-top:1px solid #e2e8f0; display:flex; gap:10px; }
+.editor-bottom .save-draft { flex:1; padding:12px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; font-size:14px; font-weight:600; cursor:pointer; }
+.editor-bottom .publish { flex:1; padding:12px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
+
+/* Bottom padding for all screens */
+.screen-content { padding-bottom:80px; }
+</style>
+</head>
+<body>
+
+<!-- ==================== SCREEN 1: HOMEPAGE ==================== -->
+<div class="screen active" id="screen-home">
+  <div class="pub-header">
+    <h1>TechBlog AI</h1>
+    <p>Powered by AI Content Management</p>
+  </div>
+  <div class="pub-nav">
+    <span class="active">Vše</span>
+    <span>Technologie</span>
+    <span>AI & ML</span>
+    <span>Programování</span>
+    <span>Design</span>
+  </div>
+  <div class="screen-content">
+    <div class="hero-card">
+      <span class="badge">Doporučený článek</span>
+      <h2>Jak AI mění budoucnost obsahového marketingu</h2>
+      <p>Umělá inteligence revolucionizuje způsob, jakým vytváříme a distribuujeme obsah. Podívejte se na nejnovější trendy...</p>
+      <div class="meta">
+        <span>Jan Novák</span>
+        <span>•</span>
+        <span>18. únor 2026</span>
+        <span>•</span>
+        <span>5 min čtení</span>
+      </div>
+    </div>
+
+    <div class="section-title">Nejnovější články</div>
+
+    <div class="article-card" onclick="showScreen('screen-article')">
+      <div class="cat">TECHNOLOGIE</div>
+      <h3>Claude 4 Opus: Nová éra jazykových modelů</h3>
+      <p>Anthropic představil nejnovější verzi svého AI modelu s revolučními schopnostmi...</p>
+      <div class="foot">
+        <span>Petra Svobodová</span>
+        <span>15 min</span>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="cat">PROGRAMOVÁNÍ</div>
+      <h3>Next.js 15: Co je nového a proč upgradovat</h3>
+      <p>Nová verze populárního React frameworku přináší Server Components, Turbopack a další...</p>
+      <div class="foot">
+        <span>Martin Dvořák</span>
+        <span>8 min</span>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="cat">AI & ML</div>
+      <h3>Automatizace tvorby obsahu pomocí AI</h3>
+      <p>Praktický průvodce jak využít umělou inteligenci pro efektivní tvorbu blogových příspěvků...</p>
+      <div class="foot">
+        <span>Eva Králová</span>
+        <span>12 min</span>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="cat">DESIGN</div>
+      <h3>UI trendy 2026: Minimalismus a mikrointerakce</h3>
+      <p>Nejnovější trendy v uživatelském rozhraní kladou důraz na jednoduchost a plynulé animace...</p>
+      <div class="foot">
+        <span>Tomáš Kučera</span>
+        <span>6 min</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 2: ARTICLE DETAIL ==================== -->
+<div class="screen" id="screen-article">
+  <div class="art-header">
+    <button class="back" onclick="showScreen('screen-home')">&larr;</button>
+    <span class="cat-badge">TECHNOLOGIE</span>
+    <h1>Claude 4 Opus: Nová éra jazykových modelů</h1>
+    <div class="meta-row">
+      <span>Petra Svobodová</span>
+      <span>•</span>
+      <span>16. únor 2026</span>
+      <span>•</span>
+      <span>15 min čtení</span>
+    </div>
+  </div>
+  <div class="art-body screen-content">
+    <p>Anthropic právě představil Claude 4 Opus, svůj dosud nejpokročilejší jazykový model, který posouvá hranice toho, co je s umělou inteligencí možné.</p>
+
+    <h2>Co je nového?</h2>
+    <p>Nový model přináší výrazné zlepšení v oblasti porozumění kontextu, generování kódu a kreativního psaní. Díky inovativní architektuře dokáže zpracovat až <code>200K tokenů</code> v jednom dotazu.</p>
+
+    <blockquote>
+      „Claude 4 Opus představuje skok v kvalitě, který mění způsob, jakým lidé pracují s AI." — Dario Amodei, CEO Anthropic
+    </blockquote>
+
+    <h2>Praktické využití</h2>
+    <p>Model exceluje především v oblastech jako je analýza dokumentů, asistence při programování a tvorba strukturovaného obsahu. Pro vývojáře je k dispozici přes API i přes Claude Code CLI.</p>
+
+    <p>Oproti předchozí verzi nabízí model o 40% lepší přesnost u komplexních úloh a výrazně rychlejší odezvu. To z něj dělá ideální nástroj pro profesionální nasazení v enterprise prostředí.</p>
+
+    <h2>Integrace s CMS systémy</h2>
+    <p>Jednou z nejzajímavějších novinek je nativní podpora pro integrace s redakčními systémy. Díky tomu mohou redaktoři generovat články, optimalizovat SEO a plánovat obsah přímo z administračního rozhraní.</p>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 3: LOGIN ==================== -->
+<div class="screen" id="screen-login">
+  <div class="login-screen">
+    <div class="login-box">
+      <div class="logo">
+        <span>TechBlog AI</span>
+        <p>Přihlášení do administrace</p>
+      </div>
+      <label>E-mail</label>
+      <input type="email" placeholder="admin@techblog.cz" value="admin@techblog.cz">
+      <label>Heslo</label>
+      <input type="password" placeholder="••••••••" value="password">
+      <button class="btn" onclick="showScreen('screen-admin')">Přihlásit se</button>
+      <div class="forgot">Zapomenuté heslo?</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 4: ADMIN DASHBOARD ==================== -->
+<div class="screen" id="screen-admin">
+  <div class="admin-header">
+    <h1>Dashboard</h1>
+    <div class="avatar">TM</div>
+  </div>
+  <div class="screen-content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Články celkem</div>
+        <div class="value">147</div>
+        <div class="change up">+12 tento měsíc</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Zobrazení</div>
+        <div class="value">24.8K</div>
+        <div class="change up">+18% oproti min. měsíci</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">AI generované</div>
+        <div class="value">63</div>
+        <div class="change up">43% všech článků</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Naplánované</div>
+        <div class="value">8</div>
+        <div class="change">Na příštích 7 dní</div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <h3>Rychlé akce</h3>
+      <div class="qa-grid">
+        <div class="qa-btn" onclick="showScreen('screen-editor')">
+          <div class="icon">&#9997;</div>
+          <div class="text">Nový článek</div>
+        </div>
+        <div class="qa-btn" onclick="showScreen('screen-ai')">
+          <div class="icon">&#9733;</div>
+          <div class="text">AI Generátor</div>
+        </div>
+        <div class="qa-btn" onclick="showScreen('screen-calendar')">
+          <div class="icon">&#128197;</div>
+          <div class="text">Plánovač</div>
+        </div>
+        <div class="qa-btn">
+          <div class="icon">&#128202;</div>
+          <div class="text">Analytika</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recent-section">
+      <h3>Poslední články</h3>
+      <div class="recent-item">
+        <div class="info">
+          <h4>Claude 4 Opus: Nová éra</h4>
+          <p>Petra Svobodová • 16. 2. 2026</p>
+        </div>
+        <span class="status status-pub">Publikováno</span>
+      </div>
+      <div class="recent-item">
+        <div class="info">
+          <h4>Next.js 15: Co je nového</h4>
+          <p>Martin Dvořák • 17. 2. 2026</p>
+        </div>
+        <span class="status status-pub">Publikováno</span>
+      </div>
+      <div class="recent-item">
+        <div class="info">
+          <h4>GraphQL vs REST v roce 2026</h4>
+          <p>Jan Novák • 19. 2. 2026</p>
+        </div>
+        <span class="status status-sched">Naplánováno</span>
+      </div>
+      <div class="recent-item">
+        <div class="info">
+          <h4>Bezpečnost webových aplikací</h4>
+          <p>Eva Králová • rozpracováno</p>
+        </div>
+        <span class="status status-draft">Koncept</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 5: AI GENERATOR ==================== -->
+<div class="screen" id="screen-ai">
+  <div class="ai-header">
+    <h2>AI Generátor článků</h2>
+    <p>Nechte AI vytvořit obsah za vás</p>
+  </div>
+  <div class="ai-form screen-content">
+    <div class="field">
+      <label>Téma článku</label>
+      <input type="text" placeholder="např. Budoucnost umělé inteligence">
+    </div>
+    <div class="field">
+      <label>Klíčová slova</label>
+      <input type="text" placeholder="AI, machine learning, budoucnost">
+    </div>
+    <div class="field">
+      <label>Tón článku</label>
+      <div class="chip-row">
+        <span class="chip selected">Profesionální</span>
+        <span class="chip">Neformální</span>
+        <span class="chip">Edukativní</span>
+        <span class="chip">Zábavný</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Délka článku</label>
+      <div class="chip-row">
+        <span class="chip">Krátký (500 slov)</span>
+        <span class="chip selected">Střední (1000 slov)</span>
+        <span class="chip">Dlouhý (2000+ slov)</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Kategorie</label>
+      <select>
+        <option>Technologie</option>
+        <option>AI & ML</option>
+        <option>Programování</option>
+        <option>Design</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Další instrukce (volitelné)</label>
+      <textarea placeholder="Doplňující informace pro AI generátor..."></textarea>
+    </div>
+    <button class="gen-btn">&#9733; Generovat článek</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 6: CONTENT PLANNER ==================== -->
+<div class="screen" id="screen-calendar">
+  <div class="cal-header">
+    <h2>Plánovač obsahu</h2>
+    <button style="padding:8px 14px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;">+ Nový</button>
+  </div>
+  <div class="screen-content">
+    <div class="cal-month">&larr; Únor 2026 &rarr;</div>
+    <div class="cal-grid">
+      <div class="cal-day-label">Po</div>
+      <div class="cal-day-label">Út</div>
+      <div class="cal-day-label">St</div>
+      <div class="cal-day-label">Čt</div>
+      <div class="cal-day-label">Pá</div>
+      <div class="cal-day-label">So</div>
+      <div class="cal-day-label">Ne</div>
+
+      <div class="cal-day other">26</div>
+      <div class="cal-day other">27</div>
+      <div class="cal-day other">28</div>
+      <div class="cal-day other">29</div>
+      <div class="cal-day other">30</div>
+      <div class="cal-day other">31</div>
+      <div class="cal-day">1</div>
+
+      <div class="cal-day has-post">2</div>
+      <div class="cal-day">3</div>
+      <div class="cal-day has-post">4</div>
+      <div class="cal-day">5</div>
+      <div class="cal-day">6</div>
+      <div class="cal-day has-post">7</div>
+      <div class="cal-day">8</div>
+
+      <div class="cal-day">9</div>
+      <div class="cal-day has-post">10</div>
+      <div class="cal-day">11</div>
+      <div class="cal-day has-post">12</div>
+      <div class="cal-day">13</div>
+      <div class="cal-day">14</div>
+      <div class="cal-day">15</div>
+
+      <div class="cal-day has-post">16</div>
+      <div class="cal-day">17</div>
+      <div class="cal-day today has-post">18</div>
+      <div class="cal-day has-post">19</div>
+      <div class="cal-day">20</div>
+      <div class="cal-day has-post">21</div>
+      <div class="cal-day">22</div>
+
+      <div class="cal-day">23</div>
+      <div class="cal-day has-post">24</div>
+      <div class="cal-day">25</div>
+      <div class="cal-day">26</div>
+      <div class="cal-day">27</div>
+      <div class="cal-day">28</div>
+      <div class="cal-day other">1</div>
+    </div>
+
+    <div class="sched-list">
+      <h3>Naplánované na tento týden</h3>
+      <div class="sched-item">
+        <h4>GraphQL vs REST v roce 2026</h4>
+        <div class="time">19. únor • 09:00</div>
+        <div class="desc">Srovnání dvou přístupů k API designu s praktickými příklady</div>
+      </div>
+      <div class="sched-item">
+        <h4>Průvodce TypeScript 5.5</h4>
+        <div class="time">21. únor • 10:00</div>
+        <div class="desc">Nové funkce a vylepšení v nejnovější verzi TypeScriptu</div>
+      </div>
+      <div class="sched-item">
+        <h4>DevOps best practices</h4>
+        <div class="time">24. únor • 08:00</div>
+        <div class="desc">CI/CD pipeline, kontejnerizace a monitoring v produkci</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 7: EDITOR ==================== -->
+<div class="screen" id="screen-editor">
+  <div class="admin-header">
+    <button style="border:none;background:none;font-size:18px;cursor:pointer;" onclick="showScreen('screen-admin')">&larr;</button>
+    <h1 style="font-size:16px;">Editor článku</h1>
+    <div style="width:32px;"></div>
+  </div>
+  <div class="editor-toolbar">
+    <button><b>B</b></button>
+    <button><i>I</i></button>
+    <button><u>U</u></button>
+    <button>H1</button>
+    <button>H2</button>
+    <button>&#128279;</button>
+    <button>&#128247;</button>
+    <button>&ldquo;&rdquo;</button>
+    <button>{'<>'}</button>
+    <button>&#9733; AI</button>
+  </div>
+  <div class="editor-area">
+    <input class="title-input" type="text" placeholder="Nadpis článku..." value="Bezpečnost webových aplikací v roce 2026">
+    <textarea class="content-area" placeholder="Začněte psát obsah článku...">V dnešním digitálním světě je bezpečnost webových aplikací důležitější než kdy předtím. S rostoucím počtem kybernetických hrozeb musí vývojáři přistupovat k zabezpečení proaktivně.
+
+Mezi klíčové oblasti patří:
+
+1. Autentizace a autorizace - implementace moderních standardů jako OAuth 2.0 a OpenID Connect
+2. Ochrana dat - šifrování citlivých údajů v klidu i při přenosu
+3. Input validace - důsledná kontrola všech vstupů od uživatele
+4. Security headers - správná konfigurace HTTP hlaviček</textarea>
+  </div>
+  <div class="editor-bottom">
+    <button class="save-draft">Uložit koncept</button>
+    <button class="publish">Publikovat</button>
+  </div>
+</div>
+
+<!-- ==================== BOTTOM NAVIGATION ==================== -->
+<div class="switcher">
+  <button class="active" onclick="showScreen('screen-home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Web
+  </button>
+  <button onclick="showScreen('screen-login')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Login
+  </button>
+  <button onclick="showScreen('screen-admin')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Admin
+  </button>
+  <button onclick="showScreen('screen-ai')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    AI
+  </button>
+  <button onclick="showScreen('screen-calendar')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Plán
+  </button>
+  <button onclick="showScreen('screen-editor')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Editor
+  </button>
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  // Update nav buttons
+  const map = {
+    'screen-home': 0, 'screen-article': 0,
+    'screen-login': 1,
+    'screen-admin': 2,
+    'screen-ai': 3,
+    'screen-calendar': 4,
+    'screen-editor': 5
+  };
+  document.querySelectorAll('.switcher button').forEach((b, i) => {
+    b.classList.toggle('active', i === map[id]);
+  });
+
+  window.scrollTo(0, 0);
+}
+
+// Chip selection
+document.querySelectorAll('.chip-row').forEach(row => {
+  row.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      row.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+  });
+});
+</script>
+
+</body>
+</html>
